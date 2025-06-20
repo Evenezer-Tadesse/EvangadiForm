@@ -1,0 +1,130 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 90px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .logo {
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+  }
+  .logo img{
+    width: 250px;
+  }
+  
+.menuToggle {
+    display: none;
+    font-size: 2rem;
+    margin-top: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .closeButton {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    align-self: flex-end;
+    margin: 1rem;
+    cursor: pointer;
+  }
+  .nav_links {
+    display: flex;
+    gap: 20px;
+    transition: all 0.3s;
+  }
+  
+  .nav_links a {
+    text-decoration: none;
+    color: black;
+    font-size: 1.3rem;
+    font-family: sans-serif;
+  }
+  .nav_links a:last-child{
+    color: #fff;
+   justify-content: center;
+   align-items: center;
+   font-size: 1.1rem;
+   
+  }
+  .nav_links a:last-child:hover{
+    background-color: #FE8402;
+    color: #fff;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 6px;
+    background: #516cf0;
+    width: 200px;
+    margin: -8px;
+    transition: all 400ms ease;
+  }
+ 
+
+  .mobileMenu {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: white;
+  padding: 1rem;
+  gap: 1.5rem;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000;
+}
+.mobile_logo{
+    position: absolute;
+    top: 30px;
+    
+
+}
+.mobile_logo img{
+    width: 200px;
+}
+.mobileMenu a{
+    text-decoration: none;
+    color: #000;
+    border-bottom: 1px solid rgb(212, 205, 205);
+    padding-bottom: 10px;
+    transition: all 0.3s;
+}
+.mobileMenu a:hover{
+  color: #FF8500;
+}
+.nav_links a:hover{
+  color: #FF8500;
+}
+.showMenu {
+  display: flex;
+  transform: translateX(0);
+}
+  
+  @media (max-width: 768px) {
+    .header {
+      padding: 15px 20px;
+      /* align-items: flex-start; */
+    }
+    .logo img{
+        width: 200px;
+    }
+    .menuToggle {
+        display: block;
+      }
+    .nav_links{
+        display: none;
+    }
+    
+  }
+  

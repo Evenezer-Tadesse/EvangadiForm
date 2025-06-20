@@ -1,0 +1,481 @@
+.main_wrapper {
+  background: linear-gradient(125deg, #A9C9F5 0%, #fff 50%, #F8BCB9 100%);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: transparent;
+  min-height: 100vh;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #516cf0;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  color: #ff8500;
+  transform: translateX(-3px);
+}
+
+.questionSection {
+  margin-bottom: 2rem;
+}
+
+.questionCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.questionTag {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tagIcon {
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
+}
+
+.tagTitle {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #3b455a;
+  position: relative;
+}
+
+.tagTitle::after {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 120px;
+  background: orange;
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+}
+
+.questionContent {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #3b455a;
+  margin: 1.5rem 0;
+}
+
+.questionMeta {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.answersSection {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  color: #3b455a;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.noAnswers {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.answerCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e1e4e8;
+  transition: all 0.2s ease;
+}
+
+.answerCard:hover {
+  border-color: #516cf0;
+  transform: translateY(-2px);
+}
+
+.answerContent {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #3b455a;
+  margin-bottom: 1.5rem;
+}
+
+.answerFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #516cf0;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.username {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #3b455a;
+}
+
+.time {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.answerFormSection {
+  margin-top: 2rem;
+}
+
+.formTitle {
+  font-size: 1.5rem;
+  color: #3b455a;
+  margin-bottom: 1.5rem;
+}
+
+.answerInput {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #3b455a;
+  resize: vertical;
+  min-height: 150px;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.answerInput:focus {
+  outline: none;
+  border-color: #516cf0;
+  box-shadow: 0 0 0 3px rgba(81, 108, 240, 0.1);
+}
+
+.successMessage {
+  display: none;
+  background: #e6f7ee;
+  color: #0d8a4f;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.successMessage span {
+  font-weight: bold;
+}
+
+.postAnswerBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #516cf0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.postAnswerBtn:hover {
+  background: #3a56c8;
+  transform: translateY(-2px);
+}
+
+.postAnswerBtn:disabled {
+  background: #a0a7c2;
+  cursor: not-allowed;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(125deg, #f5f9ff 0%, #fff 50%, #fff5f5 100%);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .questionCard {
+    padding: 1.5rem;
+  }
+  
+  .tagTitle {
+    font-size: 1.3rem;
+  }
+  
+  .answerFooter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
+.deleteButton {
+  background-color: #ff4d4d; /* Red color for delete */
+  color: #fff; /* White text */
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.deleteButton:hover {
+  background-color: #e60000; /* Darker red on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
+.deleteButton:active {
+  transform: scale(0.95); /* Slight shrink effect on click */
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  resize: none;
+}
+
+.editTextarea:focus {
+  outline: none;
+  border-color: #4f6cff;
+  box-shadow: 0 0 5px rgba(81, 108, 240, 0.5);
+}
+
+.editQuestionForm {
+  background-color: #f9f9f9; /* Light background for the editing section */
+  border: 1px solid #ddd; /* Border for the editing section */
+  border-radius: 8px; /* Rounded corners */
+  padding: 1.5rem; /* Padding inside the form */
+  margin-bottom: 1.5rem; /* Space below the form */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.editInput,
+.editTextarea {
+  width: 100%; /* Full width for inputs */
+  padding: 0.5rem; /* Padding inside inputs */
+  border: 1px solid #ccc; /* Border for inputs */
+  border-radius: 5px; /* Rounded corners for inputs */
+  font-size: 1rem; /* Font size for inputs */
+  margin-bottom: 1rem; /* Space between inputs */
+}
+
+.editInput:focus,
+.editTextarea:focus {
+  outline: none; /* Remove default focus outline */
+  border-color: #4f6cff; /* Highlight border on focus */
+  box-shadow: 0 0 5px rgba(81, 108, 240, 0.5); /* Subtle glow on focus */
+}
+
+.saveButton,
+.cancelButton {
+  background-color: #4f6cff; /* Primary button color */
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 0.5rem 1rem; /* Padding inside buttons */
+  font-size: 1rem; /* Font size for buttons */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+}
+
+.saveButton:hover {
+  background-color: #3b5bcc; /* Darker blue on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
+.cancelButton {
+  background-color: #ff4d4d; /* Red color for cancel button */
+  margin-left: 1rem; /* Space between buttons */
+}
+
+.cancelButton:hover {
+  background-color: #e60000; /* Darker red on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
+.editButton {
+  background-color: #4f6cff; /* Primary button color */
+  color: #fff; /* White text */
+  border: none; /* Remove border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 0.5rem 1rem; /* Padding inside buttons */
+  font-size: 0.9rem; /* Font size for buttons */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+  margin-right: 10px;
+}
+
+.editButton:hover {
+  background-color: #3b5bcc; /* Darker blue on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
+.editButton:active {
+  transform: scale(0.95); /* Slight shrink effect on click */
+}
+
+.questionActions {
+  margin-top: 10px;
+}
+
+.likeButton,
+.dislikeButton {
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.likeButton:hover {
+  background-color: #d4edda; /* Light green for like */
+}
+
+.dislikeButton:hover {
+  background-color: #f8d7da; /* Light red for dislike */
+}
+
+.likeButton.active,
+.dislikeButton.active {
+  background-color: #d4edda; /* Highlight for active like */
+  border: 1px solid #28a745; /* Green border for active like */
+}
+
+.dislikeButton.active {
+  background-color: #f8d7da; /* Highlight for active dislike */
+  border: 1px solid #dc3545; /* Red border for active dislike */
+}
+
+/* Comments Section */
+.commentsSection {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.commentsSection h3 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.commentsSection ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.commentsSection ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.commentsSection ul li:last-child {
+  border-bottom: none;
+}
+
+.commentsSection ul li span {
+  font-size: 14px;
+  color: #333;
+}
+
+.deleteCommentButton {
+  background-color: #ff4d4d;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.deleteCommentButton:hover {
+  background-color: #e60000;
+}
+
+.commentInput {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.addCommentButton {
+  margin-top: 10px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.addCommentButton:hover {
+  background-color: #45a049;
+}

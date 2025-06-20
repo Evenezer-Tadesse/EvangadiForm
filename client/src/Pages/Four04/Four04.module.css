@@ -1,0 +1,27 @@
+.main_wrapper {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+.content_wrapper {
+  width: 520px;
+}
+
+.content_wrapper .title {
+  color: #24334b;
+  font-weight: 600;
+  font-size: 28px;
+}
+
+.content_wrapper p {
+  color: #67748e;
+  font-size: 17px;
+}
+
+.content_wrapper a {
+  color: #da7000;
+}
