@@ -1,13 +1,13 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import styles from './AnswerPage.module.css';
-import axiosBase from '../../Api/axiosConfig';
-import { useParams, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../Context/Context';
-import { format, formatDistanceToNow } from 'date-fns';
-import { FaArrowLeft, FaPaperPlane, FaEdit, FaTrash } from 'react-icons/fa';
-import { ClipLoader } from 'react-spinners';
-import Loader from '../../Components/Loader/Loader';
-import Shared from '../../Components/Shared/Shared';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import styles from "./AnswerPage.module.css";
+import axiosBase from "../../Api/axiosConfig";
+import { useParams, useNavigate } from "react-router-dom";
+import { AuthContext } from "../../Context/Context";
+import { format, formatDistanceToNow } from "date-fns";
+import { FaArrowLeft, FaPaperPlane, FaEdit, FaTrash } from "react-icons/fa";
+import { ClipLoader } from "react-spinners";
+import Loader from "../../Components/Loader/Loader";
+import Shared from "../../Components/Shared/Shared";
 
 const AnswerPage = () => {
   const { questionid } = useParams();
@@ -25,16 +25,16 @@ const AnswerPage = () => {
 
   // Comment state
   const [comments, setComments] = useState({});
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
 
   // State for editing the question
   const [isEditingQuestion, setIsEditingQuestion] = useState(false);
-  const [editedQuestion, setEditedQuestion] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
+  const [editedQuestion, setEditedQuestion] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
 
   // Add state for editing answers
   const [isEditingAnswer, setIsEditingAnswer] = useState(null); // Tracks which answer is being edited
-  const [editedAnswerContent, setEditedAnswerContent] = useState(''); // Tracks the edited content
+  const [editedAnswerContent, setEditedAnswerContent] = useState(""); // Tracks the edited content
 
   // State for notifications
   const answerDom = useRef(null);
@@ -95,15 +95,15 @@ const AnswerPage = () => {
     setIsPosting(true);
     try {
       await axiosBase.post(
-        '/answers/postanswer',
+        "/answers/postanswer",
         { answer, questionid: question.questionid },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      answerDom.current.value = '';
-      postedNotification.current.style.display = 'block';
+      answerDom.current.value = "";
+      postedNotification.current.style.display = "block";
       setTimeout(() => {
-        postedNotification.current.style.display = 'none';
+        postedNotification.current.style.display = "none";
       }, 2000);
 
       // Refresh answers
@@ -141,7 +141,7 @@ const AnswerPage = () => {
       await axiosBase.delete(`/questions/delete/${questionid}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      navigate('/'); // Redirect to home page after deletion
+      navigate("/"); // Redirect to home page after deletion
     } catch (error) {
       console.error(error.response.data.msg);
     }
@@ -158,7 +158,7 @@ const AnswerPage = () => {
       );
     } catch (error) {
       console.error(
-        'Error deleting answer:',
+        "Error deleting answer:",
         error.response?.data?.msg || error.message
       );
     }
@@ -168,38 +168,53 @@ const AnswerPage = () => {
     try {
       const res = await axiosBase.post(
         `/answers/vote/${answerId}`,
-        { voteType },
+        { voteType }, // must be "upvote" or "downvote"
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (res.data.msg === 'Vote removed successfully') {
-        // If the vote was removed, decrease the count
-        setAnswers((prev) =>
-          prev.map((answer) =>
-            answer.answerid === answerId
-              ? voteType === 'like'
-                ? { ...answer, likes: answer.likes - 1 }
-                : { ...answer, dislikes: answer.dislikes - 1 }
-              : answer
-          )
-        );
-      } else {
-        // If the vote was added, increase the count
-        setAnswers((prev) =>
-          prev.map((answer) =>
-            answer.answerid === answerId
-              ? voteType === 'like'
-                ? { ...answer, likes: answer.likes + 1 }
-                : { ...answer, dislikes: answer.dislikes + 1 }
-              : answer
-          )
-        );
-      }
+      const message = res.data.msg;
+
+      setAnswers((prev) =>
+        prev.map((answer) => {
+          if (answer.answerid !== answerId) return answer;
+
+          // Adjust vote counts based on backend message
+          if (message.includes("removed")) {
+            if (voteType === "upvote") {
+              return { ...answer, likes: answer.likes - 1 };
+            } else {
+              return { ...answer, dislikes: answer.dislikes - 1 };
+            }
+          } else if (message.includes("changed")) {
+            if (voteType === "upvote") {
+              return {
+                ...answer,
+                likes: answer.likes + 1,
+                dislikes: answer.dislikes - 1,
+              };
+            } else {
+              return {
+                ...answer,
+                likes: answer.likes - 1,
+                dislikes: answer.dislikes + 1,
+              };
+            }
+          } else if (message.includes("added")) {
+            if (voteType === "upvote") {
+              return { ...answer, likes: answer.likes + 1 };
+            } else {
+              return { ...answer, dislikes: answer.dislikes + 1 };
+            }
+          }
+
+          return answer;
+        })
+      );
     } catch (error) {
       console.error(
-        'Error voting on answer:',
+        "Error voting on answer:",
         error.response?.data?.msg || error.message
       );
     }
@@ -224,10 +239,10 @@ const AnswerPage = () => {
 
       // Exit editing mode
       setIsEditingAnswer(null);
-      setEditedAnswerContent('');
+      setEditedAnswerContent("");
     } catch (error) {
       console.error(
-        'Error editing answer:',
+        "Error editing answer:",
         error.response?.data?.msg || error.message
       );
     }
@@ -248,7 +263,7 @@ const AnswerPage = () => {
       setComments(updatedComments);
     } catch (error) {
       console.error(
-        'Error fetching comments:',
+        "Error fetching comments:",
         error.response?.data?.msg || error.message
       );
     }
@@ -263,11 +278,11 @@ const AnswerPage = () => {
         { content: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setNewComment('');
+      setNewComment("");
       fetchComments(); // Refresh comments after adding
     } catch (error) {
       console.error(
-        'Error adding comment:',
+        "Error adding comment:",
         error.response?.data?.msg || error.message
       );
     }
@@ -281,7 +296,7 @@ const AnswerPage = () => {
       fetchComments(answerId); // Refresh comments after deletion
     } catch (error) {
       console.error(
-        'Error deleting comment:',
+        "Error deleting comment:",
         error.response?.data?.msg || error.message
       );
     }
@@ -290,7 +305,7 @@ const AnswerPage = () => {
   const formatQuestionDate = (dateString) => {
     const postedTime = new Date(dateString);
     const timeAgo = formatDistanceToNow(postedTime, { addSuffix: true });
-    const formattedDate = format(postedTime, 'MMM d');
+    const formattedDate = format(postedTime, "MMM d");
     return `${timeAgo} • ${formattedDate}`;
   };
 
@@ -424,7 +439,7 @@ const AnswerPage = () => {
                       <button
                         onClick={() => {
                           setIsEditingAnswer(null);
-                          setEditedAnswerContent('');
+                          setEditedAnswerContent("");
                         }}
                         className={styles.cancelButton}
                       >
@@ -449,20 +464,20 @@ const AnswerPage = () => {
                         <div className={styles.answerActions}>
                           <button
                             onClick={() =>
-                              handleVoteAnswer(answer.answerid, 'like')
+                              handleVoteAnswer(answer.answerid, "upvote")
                             }
                             className={`${styles.likeButton} ${
-                              answer.likes === 1 ? styles.active : ''
+                              answer.likes === 1 ? styles.active : ""
                             }`}
                           >
                             👍 Like {answer.likes}
                           </button>
                           <button
                             onClick={() =>
-                              handleVoteAnswer(answer.answerid, 'dislike')
+                              handleVoteAnswer(answer.answerid, "downvote")
                             }
                             className={`${styles.dislikeButton} ${
-                              answer.dislikes === 1 ? styles.active : ''
+                              answer.dislikes === 1 ? styles.active : ""
                             }`}
                           >
                             👎 Dislike {answer.dislikes}

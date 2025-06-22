@@ -41,7 +41,7 @@ async function start() {
   try {
     const res = await dbConnection.execute("SELECT 'test'");
     app.listen(port, () => {
-      console.log(`✅ Server is running on https://forumbackend.salimtech.com`);
+      console.log(`✅ Server is running on https://forumbackend.evenhab.com`);
     });
     console.log('✅ Successfully connected to MySQL Database');
   } catch (error) {
