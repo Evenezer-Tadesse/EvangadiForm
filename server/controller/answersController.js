@@ -1,595 +1,339 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import styles from "./AnswerPage.module.css";
-import axiosBase from "../../Api/axiosConfig";
-import { useParams, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../Context/Context";
-import { format, formatDistanceToNow } from "date-fns";
-import { FaArrowLeft, FaPaperPlane, FaEdit, FaTrash } from "react-icons/fa";
-import { ClipLoader } from "react-spinners";
-import Loader from "../../Components/Loader/Loader";
-import Shared from "../../Components/Shared/Shared";
+const dbConnection = require("../db/dbConfig");
 
-const AnswerPage = () => {
-  const { questionid } = useParams();
-  const [{ user, token }, _] = useContext(AuthContext);
+const { StatusCodes } = require("http-status-codes");
 
-  // State for the question details
-  const [question, setQuestion] = useState({});
+async function postAnswers(req, res) {
+  const userId = req.user.userid;
+  const { answer, questionid } = req.body;
+  if (!answer) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: "Bad Request",
+      msg: "Please provide answer",
+    });
+  }
+  try {
+    await dbConnection.query(
+      "INSERT INTO answers(userid, questionid, answer) VALUES (?, ?, ?)",
+      [userId, questionid, answer]
+    );
+    res.status(StatusCodes.CREATED).json({
+      msg: "Answer posted successfully",
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
+  }
+}
 
-  // State for the list of answers
-  const [answers, setAnswers] = useState([]);
+async function getAllAnswer(req, res) {
+  const questionId = req.params.question_id;
+  const userId = req.user.userid; // Get the logged-in user's ID
 
-  // State for loading indicators
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPosting, setIsPosting] = useState(false);
+  try {
+    const [results] = await dbConnection.query(
+      `SELECT 
+        answers.answerid,
+        answers.answer AS content,
+        users.username,
+        users.userid,
+        answers.created_at,
+        answers.likes,
+        answers.dislikes,
+        users.firstname,
+        (SELECT vote_type FROM answer_votes WHERE answer_votes.answerid = answers.answerid AND answer_votes.userid = ?) AS userVote
+      FROM answers
+      JOIN users ON answers.userid = users.userId
+      WHERE answers.questionid = (
+        SELECT questionid FROM questions WHERE id = ?
+      )`,
+      [userId, questionId]
+    );
 
-  // Comment state
-  const [comments, setComments] = useState({});
-  const [newComment, setNewComment] = useState("");
-
-  // State for editing the question
-  const [isEditingQuestion, setIsEditingQuestion] = useState(false);
-  const [editedQuestion, setEditedQuestion] = useState("");
-  const [editedDescription, setEditedDescription] = useState("");
-
-  // Add state for editing answers
-  const [isEditingAnswer, setIsEditingAnswer] = useState(null); // Tracks which answer is being edited
-  const [editedAnswerContent, setEditedAnswerContent] = useState(""); // Tracks the edited content
-
-  // State for notifications
-  const answerDom = useRef(null);
-  const postedNotification = useRef(null);
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    async function fetchSingleQuestion() {
-      setIsLoading(true);
-      try {
-        const res = await axiosBase.get(`/questions/${questionid}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setQuestion(res.data.question);
-        setEditedQuestion(res.data.question.title); // Initialize edited question
-      } catch (error) {
-        console.error(error.response.data.msg);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchSingleQuestion();
-  }, [questionid, token]);
-
-  useEffect(() => {
-    async function fetchAnswer() {
-      try {
-        const res = await axiosBase.get(`/answers/${questionid}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAnswers(res.data.answer);
-
-        // Fetch comments after answers are loaded
-        const updatedComments = {};
-        for (const answer of res.data.answer) {
-          const commentRes = await axiosBase.get(
-            `/answers/comments/${answer.answerid}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          updatedComments[answer.answerid] = commentRes.data.comments;
-        }
-        setComments(updatedComments);
-      } catch (error) {
-        console.error(error.response?.data?.msg || error.message);
-      }
-    }
-    fetchAnswer();
-  }, [questionid, token]);
-
-  async function handlePostAnswer(e) {
-    e.preventDefault();
-    const answer = answerDom.current.value;
-    if (!answer.trim()) return;
-
-    setIsPosting(true);
-    try {
-      await axiosBase.post(
-        "/answers/postanswer",
-        { answer, questionid: question.questionid },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      answerDom.current.value = "";
-      postedNotification.current.style.display = "block";
-      setTimeout(() => {
-        postedNotification.current.style.display = "none";
-      }, 2000);
-
-      // Refresh answers
-      const res = await axiosBase.get(`/answers/${questionid}`, {
-        headers: { Authorization: `Bearer ${token}` },
+    // Handle case where no answers are found
+    if (results.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Not Found",
+        msg: "The requested answer could not be found",
       });
-      setAnswers(res.data.answer);
-    } catch (err) {
-      console.error(err.response.data.msg);
-    } finally {
-      setIsPosting(false);
     }
-  }
 
-  async function handleEditQuestion() {
-    try {
-      await axiosBase.put(
-        `/questions/edit/${questionid}`,
-        { title: editedQuestion, description: editedDescription },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setQuestion((prev) => ({
-        ...prev,
-        title: editedQuestion,
-        content: editedDescription,
-      }));
-      setIsEditingQuestion(false);
-    } catch (error) {
-      console.error(error.response.data.msg);
-    }
+    res.status(StatusCodes.OK).json({ answer: results });
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
   }
+}
 
-  async function handleDeleteQuestion() {
-    try {
-      await axiosBase.delete(`/questions/delete/${questionid}`, {
-        headers: { Authorization: `Bearer ${token}` },
+async function deleteAnswer(req, res) {
+  const userId = req.user.userid; // Get the logged-in user's ID
+  const answerId = req.params.id; // Get the answer ID from the route
+
+  try {
+    const [answer] = await dbConnection.query(
+      "SELECT userid FROM answers WHERE answerid = ?",
+      [answerId]
+    );
+
+    if (answer.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Not Found",
+        msg: "Answer not found",
       });
-      navigate("/"); // Redirect to home page after deletion
-    } catch (error) {
-      console.error(error.response.data.msg);
     }
-  }
 
-  async function handleDeleteAnswer(answerId) {
-    try {
-      await axiosBase.delete(`/answers/delete/${answerId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+    if (answer[0].userid !== userId) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        error: "Forbidden",
+        msg: "You are not authorized to delete this answer",
       });
-      // Update the state to remove the deleted answer
-      setAnswers((prev) =>
-        prev.filter((answer) => answer.answerid !== answerId)
-      );
-    } catch (error) {
-      console.error(
-        "Error deleting answer:",
-        error.response?.data?.msg || error.message
-      );
     }
+
+    await dbConnection.query("DELETE FROM answers WHERE answerid = ?", [
+      answerId,
+    ]);
+
+    res.status(StatusCodes.OK).json({ msg: "Answer deleted successfully" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
+  }
+}
+
+async function voteAnswer(req, res) {
+  const userId = req.user.userid;
+  const answerId = req.params.id;
+  const { voteType } = req.body; // "upvote" or "downvote"
+
+  if (!["upvote", "downvote"].includes(voteType)) {
+    return res.status(400).json({ msg: "Invalid vote type" });
   }
 
-  async function handleVoteAnswer(answerId, voteType) {
-    try {
-      const res = await axiosBase.post(
-        `/answers/vote/${answerId}`,
-        { voteType }, // must be "upvote" or "downvote"
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    const [existingVote] = await dbConnection.query(
+      "SELECT vote_type FROM answer_votes WHERE userid = ? AND answerid = ?",
+      [userId, answerId]
+    );
 
-      const message = res.data.msg;
+    if (existingVote.length > 0) {
+      const currentVote = existingVote[0].vote_type;
 
-      setAnswers((prev) =>
-        prev.map((answer) => {
-          if (answer.answerid !== answerId) return answer;
-
-          // Adjust vote counts based on backend message
-          if (message.includes("removed")) {
-            if (voteType === "upvote") {
-              return { ...answer, likes: answer.likes - 1 };
-            } else {
-              return { ...answer, dislikes: answer.dislikes - 1 };
-            }
-          } else if (message.includes("changed")) {
-            if (voteType === "upvote") {
-              return {
-                ...answer,
-                likes: answer.likes + 1,
-                dislikes: answer.dislikes - 1,
-              };
-            } else {
-              return {
-                ...answer,
-                likes: answer.likes - 1,
-                dislikes: answer.dislikes + 1,
-              };
-            }
-          } else if (message.includes("added")) {
-            if (voteType === "upvote") {
-              return { ...answer, likes: answer.likes + 1 };
-            } else {
-              return { ...answer, dislikes: answer.dislikes + 1 };
-            }
-          }
-
-          return answer;
-        })
-      );
-    } catch (error) {
-      console.error(
-        "Error voting on answer:",
-        error.response?.data?.msg || error.message
-      );
-    }
-  }
-
-  async function handleEditAnswer(answerId) {
-    try {
-      await axiosBase.put(
-        `/answers/edit/${answerId}`,
-        { content: editedAnswerContent },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Update the state to reflect the edited answer
-      setAnswers((prev) =>
-        prev.map((answer) =>
-          answer.answerid === answerId
-            ? { ...answer, content: editedAnswerContent }
-            : answer
-        )
-      );
-
-      // Exit editing mode
-      setIsEditingAnswer(null);
-      setEditedAnswerContent("");
-    } catch (error) {
-      console.error(
-        "Error editing answer:",
-        error.response?.data?.msg || error.message
-      );
-    }
-  }
-
-  async function fetchComments() {
-    try {
-      const updatedComments = {};
-      for (const answer of answers) {
-        const res = await axiosBase.get(
-          `/answers/comments/${answer.answerid}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+      if (currentVote === voteType) {
+        // User clicked the same vote again → remove it
+        await dbConnection.query(
+          "DELETE FROM answer_votes WHERE userid = ? AND answerid = ?",
+          [userId, answerId]
         );
-        updatedComments[answer.answerid] = res.data.comments;
+
+        const column = voteType === "upvote" ? "likes" : "dislikes";
+        await dbConnection.query(
+          `UPDATE answers SET ${column} = ${column} - 1 WHERE answerid = ?`,
+          [answerId]
+        );
+
+        return res.status(200).json({ msg: `${voteType} removed` });
+      } else {
+        // User switched vote (upvote ⇄ downvote)
+        await dbConnection.query(
+          "UPDATE answer_votes SET vote_type = ? WHERE userid = ? AND answerid = ?",
+          [voteType, userId, answerId]
+        );
+
+        const addColumn = voteType === "upvote" ? "likes" : "dislikes";
+        const removeColumn = voteType === "upvote" ? "dislikes" : "likes";
+
+        await dbConnection.query(
+          `UPDATE answers SET ${addColumn} = ${addColumn} + 1, ${removeColumn} = ${removeColumn} - 1 WHERE answerid = ?`,
+          [answerId]
+        );
+
+        return res.status(200).json({ msg: `Vote changed to ${voteType}` });
       }
-      setComments(updatedComments);
-    } catch (error) {
-      console.error(
-        "Error fetching comments:",
-        error.response?.data?.msg || error.message
+    } else {
+      // First time voting
+      await dbConnection.query(
+        "INSERT INTO answer_votes (userid, answerid, vote_type) VALUES (?, ?, ?)",
+        [userId, answerId, voteType]
       );
+
+      const column = voteType === "upvote" ? "likes" : "dislikes";
+      await dbConnection.query(
+        `UPDATE answers SET ${column} = ${column} + 1 WHERE answerid = ?`,
+        [answerId]
+      );
+
+      return res.status(200).json({ msg: `${voteType} added` });
     }
+  } catch (error) {
+    console.error("Vote error:", error.message);
+    return res.status(500).json({ msg: "Server error while voting" });
+  }
+}
+
+async function editAnswer(req, res) {
+  const userId = req.user.userid; // Get the logged-in user's ID
+  const answerId = req.params.id; // Get the answer ID from the route
+  const { content } = req.body; // Get the new content for the answer
+
+  if (!content || !content.trim()) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: "Bad Request",
+      msg: "Answer content cannot be empty",
+    });
   }
 
-  async function handleAddComment(answerId) {
-    if (!newComment.trim()) return;
+  try {
+    // Check if the answer exists and belongs to the logged-in user
+    const [answer] = await dbConnection.query(
+      "SELECT userid FROM answers WHERE answerid = ?",
+      [answerId]
+    );
 
-    try {
-      await axiosBase.post(
-        `/answers/comments/${answerId}`,
-        { content: newComment },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setNewComment("");
-      fetchComments(); // Refresh comments after adding
-    } catch (error) {
-      console.error(
-        "Error adding comment:",
-        error.response?.data?.msg || error.message
-      );
-    }
-  }
-
-  async function handleDeleteComment(commentId, answerId) {
-    try {
-      await axiosBase.delete(`/answers/comments/${commentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+    if (answer.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Not Found",
+        msg: "Answer not found",
       });
-      fetchComments(answerId); // Refresh comments after deletion
-    } catch (error) {
-      console.error(
-        "Error deleting comment:",
-        error.response?.data?.msg || error.message
-      );
     }
+
+    if (answer[0].userid !== userId) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        error: "Forbidden",
+        msg: "You are not authorized to edit this answer",
+      });
+    }
+
+    // Update the answer content
+    await dbConnection.query(
+      "UPDATE answers SET answer = ? WHERE answerid = ?",
+      [content, answerId]
+    );
+
+    res.status(StatusCodes.OK).json({
+      msg: "Answer updated successfully",
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
+  }
+}
+
+// Add a comment to an answer
+async function addComment(req, res) {
+  const userId = req.user.userid; // Get the logged-in user's ID
+  const answerId = req.params.answerId; // Get the answer ID from the route
+  const { content } = req.body; // Get the comment content
+
+  if (!content || !content.trim()) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: "Bad Request",
+      msg: "Comment content cannot be empty",
+    });
   }
 
-  const formatQuestionDate = (dateString) => {
-    const postedTime = new Date(dateString);
-    const timeAgo = formatDistanceToNow(postedTime, { addSuffix: true });
-    const formattedDate = format(postedTime, "MMM d");
-    return `${timeAgo} • ${formattedDate}`;
-  };
+  try {
+    await dbConnection.query(
+      "INSERT INTO comments (answerid, userid, content) VALUES (?, ?, ?)",
+      [answerId, userId, content]
+    );
 
-  if (isLoading) {
-    return <Loader />;
+    res.status(StatusCodes.CREATED).json({
+      msg: "Comment added successfully",
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
   }
+}
 
-  return (
-    <Shared>
-      <div className={styles.main_wrapper}>
-        <div className={styles.container}>
-          <button onClick={() => navigate(-1)} className={styles.backButton}>
-            <FaArrowLeft /> Back to Questions
-          </button>
+// Get all comments for an answer
+async function getComments(req, res) {
+  const answerId = req.params.answerId; // Get the answer ID from the route
 
-          {/* Question Section */}
-          <div className={styles.questionSection}>
-            <div className={styles.questionCard}>
-              {isEditingQuestion ? (
-                <div className={styles.editQuestionForm}>
-                  <input
-                    type="text"
-                    value={editedQuestion}
-                    onChange={(e) => setEditedQuestion(e.target.value)}
-                    className={styles.editInput}
-                    placeholder="Edit title"
-                  />
-                  <textarea
-                    value={editedDescription}
-                    onChange={(e) => setEditedDescription(e.target.value)}
-                    className={styles.editTextarea}
-                    placeholder="Edit description"
-                    rows={4}
-                  />
-                  <button
-                    onClick={handleEditQuestion}
-                    className={styles.saveButton}
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setIsEditingQuestion(false)}
-                    className={styles.cancelButton}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className={styles.questionTag}>
-                    <span className={styles.tagIcon}>
-                      <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 28 28"
-                        fill="none"
-                      >
-                        <circle cx="14" cy="14" r="14" fill="#4F6CFF" />
-                        <path
-                          d="M12 9l5 5-5 5"
-                          stroke="#fff"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                    <span className={styles.tagTitle}>{question?.title}</span>
-                  </div>
-                  <div className={styles.questionContent}>
-                    {question?.content}
-                  </div>
-                  <div className={styles.questionMeta}>
-                    {question?.created_at && (
-                      <span className={styles.time}>
-                        {formatQuestionDate(question.created_at)}
-                      </span>
-                    )}
-                  </div>
-                  {user?.userid === question?.userid && (
-                    <div className={styles.questionActions}>
-                      <button
-                        onClick={() => {
-                          setEditedQuestion(question.title);
-                          setEditedDescription(question.content);
-                          setIsEditingQuestion(true);
-                        }}
-                        className={styles.editButton}
-                      >
-                        <FaEdit /> Edit
-                      </button>
-                      <button
-                        onClick={handleDeleteQuestion}
-                        className={styles.deleteButton}
-                      >
-                        <FaTrash /> Delete
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+  try {
+    const [comments] = await dbConnection.query(
+      `SELECT 
+        comments.commentid,
+        comments.content,
+        comments.created_at,
+        users.username,
+        users.userid
+      FROM comments
+      JOIN users ON comments.userid = users.userid
+      WHERE comments.answerid = ?`,
+      [answerId]
+    );
 
-          {/* Answers Section */}
-          <div className={styles.answersSection}>
-            <h2 className={styles.sectionTitle}>Answers ({answers.length})</h2>
+    res.status(StatusCodes.OK).json({ comments });
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
+  }
+}
 
-            {answers.length === 0 ? (
-              <div className={styles.noAnswers}>
-                No answers yet. Be the first to share your knowledge!
-              </div>
-            ) : (
-              answers.map((answer, i) => (
-                <div className={styles.answerCard} key={i}>
-                  {isEditingAnswer === answer.answerid ? (
-                    <div className={styles.editAnswerForm}>
-                      <textarea
-                        value={editedAnswerContent}
-                        onChange={(e) => setEditedAnswerContent(e.target.value)}
-                        className={styles.editTextarea}
-                        placeholder="Edit your answer"
-                        rows={4}
-                      />
-                      <button
-                        onClick={() => handleEditAnswer(answer.answerid)}
-                        className={styles.saveButton}
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsEditingAnswer(null);
-                          setEditedAnswerContent("");
-                        }}
-                        className={styles.cancelButton}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className={styles.answerContent}>
-                        {answer.content}
-                      </div>
-                      <div className={styles.answerFooter}>
-                        <div className={styles.userInfo}>
-                          <div className={styles.avatar}>
-                            {answer.username?.charAt(0).toUpperCase()}
-                          </div>
-                          <span className={styles.username}>
-                            {answer.username}
-                          </span>
-                        </div>
+// Delete a comment
+async function deleteComment(req, res) {
+  const userId = req.user.userid; // Get the logged-in user's ID
+  const commentId = req.params.commentId; // Get the comment ID from the route
 
-                        <div className={styles.answerActions}>
-                          <button
-                            onClick={() =>
-                              handleVoteAnswer(answer.answerid, "upvote")
-                            }
-                            className={`${styles.likeButton} ${
-                              answer.likes === 1 ? styles.active : ""
-                            }`}
-                          >
-                            👍 Like {answer.likes}
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleVoteAnswer(answer.answerid, "downvote")
-                            }
-                            className={`${styles.dislikeButton} ${
-                              answer.dislikes === 1 ? styles.active : ""
-                            }`}
-                          >
-                            👎 Dislike {answer.dislikes}
-                          </button>
-                        </div>
+  try {
+    const [comment] = await dbConnection.query(
+      "SELECT userid FROM comments WHERE commentid = ?",
+      [commentId]
+    );
 
-                        {answer.created_at && (
-                          <span className={styles.time}>
-                            {formatQuestionDate(answer.created_at)}
-                          </span>
-                        )}
-                        {user?.userid === answer?.userid && (
-                          <div className={styles.answerActions}>
-                            <button
-                              onClick={() => {
-                                setIsEditingAnswer(answer.answerid);
-                                setEditedAnswerContent(answer.content);
-                              }}
-                              className={styles.editButton}
-                            >
-                              <FaEdit /> Edit
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteAnswer(answer.answerid)
-                              }
-                              className={styles.deleteButton}
-                            >
-                              <FaTrash /> Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
+    if (comment.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        error: "Not Found",
+        msg: "Comment not found",
+      });
+    }
 
-                      {/* Comments Section */}
-                      <div className={styles.commentsSection}>
-                        <h3>Comments</h3>
-                        <ul>
-                          {comments[answer.answerid]?.map((comment) => (
-                            <li key={comment.commentid}>
-                              <span>
-                                {comment.username}: {comment.content}
-                              </span>
-                              {user.userid === comment.userid && (
-                                <button
-                                  onClick={() =>
-                                    handleDeleteComment(
-                                      comment.commentid,
-                                      answer.answerid
-                                    )
-                                  }
-                                  className={styles.deleteCommentButton}
-                                >
-                                  Delete
-                                </button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                        <textarea
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          placeholder="Add a comment..."
-                          className={styles.commentInput}
-                        />
-                        <button
-                          onClick={() => handleAddComment(answer.answerid)}
-                          className={styles.addCommentButton}
-                        >
-                          Post Comment
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+    if (comment[0].userid !== userId) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        error: "Forbidden",
+        msg: "You are not authorized to delete this comment",
+      });
+    }
 
-          {/* Answer Form */}
-          <div className={styles.answerFormSection}>
-            <h2 className={styles.formTitle}>Your Answer</h2>
-            <form onSubmit={handlePostAnswer}>
-              <textarea
-                className={styles.answerInput}
-                ref={answerDom}
-                placeholder="Write your answer here..."
-                required
-                rows={8}
-              />
-              <div ref={postedNotification} className={styles.successMessage}>
-                ✓ Your answer was posted successfully!
-              </div>
-              <button
-                type="submit"
-                className={styles.postAnswerBtn}
-                disabled={isPosting}
-              >
-                {isPosting ? (
-                  <ClipLoader color="#fff" size={18} />
-                ) : (
-                  <>
-                    <FaPaperPlane /> Post Answer
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </Shared>
-  );
+    await dbConnection.query("DELETE FROM comments WHERE commentid = ?", [
+      commentId,
+    ]);
+
+    res.status(StatusCodes.OK).json({ msg: "Comment deleted successfully" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      msg: "An unexpected error occurred",
+    });
+  }
+}
+
+module.exports = {
+  postAnswers,
+  getAllAnswer,
+  deleteAnswer,
+  voteAnswer,
+  editAnswer,
+  addComment,
+  getComments,
+  deleteComment,
 };
-
-export default AnswerPage;

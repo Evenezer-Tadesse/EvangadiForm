@@ -6,7 +6,7 @@ function Loader() {
     <div className={styles.loading_page}>
       <div className={styles.loading_center_page}>
         <div className={styles.loading_center_absolute}>
-          <img src={gif} alt="loader" />
+          <img src={gif} alt="loading..." loading='lazy'/>
         </div>
       </div>
     </div>
