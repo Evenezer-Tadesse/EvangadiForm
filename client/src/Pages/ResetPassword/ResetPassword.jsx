@@ -1,39 +1,46 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axiosInstance from '../../Api/axiosConfig';
-import styles from './ResetPassword.module.css';
-import { toast } from 'react-toastify';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axiosInstance from "../../api/axiosConfig";
+import styles from "./ResetPassword.module.css";
+import { toast } from "react-toastify";
 
 function ResetPassword() {
-  const { token } = useParams(); // Extract the token from the URL
+  const { token } = useParams();
+  console.log("Extracted token:", token);
   const navigate = useNavigate();
-  const [newPassword, setNewPassword] = useState('');
+  const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleResetPassword(e) {
     e.preventDefault();
 
     if (!newPassword.trim()) {
-      toast.error('Password is required.');
+      toast.error("Password is required.");
       return;
     }
 
     if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters.');
+      toast.error("Password must be at least 8 characters.");
       return;
     }
 
     try {
       setIsLoading(true);
-      await axiosInstance.post('/users/verify-reset-token', {
+      // Update this endpoint to match your backend route
+      await axiosInstance.post("/verify-reset-token", {
         token,
         newPassword,
       });
-      toast.success('Password reset successfully!');
-      navigate('/login'); // Redirect to login page
+      toast.success("Password reset successfully!");
+      navigate("/login");
     } catch (error) {
-      console.error('Error resetting password:', error);
-      toast.error(error?.response?.data?.msg || 'Error resetting password.');
+      console.error("Error resetting password:", error);
+      // Improved error message
+      const errorMsg =
+        error.response?.data?.msg ||
+        error.message ||
+        "Error resetting password";
+      toast.error(errorMsg);
       setIsLoading(false);
     }
   }
@@ -50,7 +57,7 @@ function ResetPassword() {
           className={styles.passwordInput}
         />
         <button type="submit" className={styles.resetButton}>
-          {isLoading ? 'Resetting...' : 'Reset Password'}
+          {isLoading ? "Resetting..." : "Reset Password"}
         </button>
       </form>
     </div>

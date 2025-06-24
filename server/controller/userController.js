@@ -204,6 +204,7 @@ async function resetPassword(req, res) {
 
 async function verifyResetToken(req, res) {
   const { token, newPassword } = req.body;
+  console.log("Received token:", token);
 
   if (!token || !newPassword) {
     return res.status(StatusCodes.BAD_REQUEST).json({
