@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './Context/Context';
-import Home from './pages/Home/Home';
-import QuestionPage from './pages/Questionpage/Questionpage';
-import AnswerPage from './pages/Answer/AnswerPage';
-import Howitworks from './pages/Howitworks/Howitworks';
-import Auth from './pages/Auth/Auth';
+import Home from './Pages/Home/Home';
+import QuestionPage from './Pages/Questionpage/Questionpage';
+import AnswerPage from './Pages/Answer/AnswerPage';
+import Howitworks from './Pages/Howitworks/Howitworks';
+import Auth from './Pages/Auth/Auth';
 import Four04 from './Pages/Four04/Four04';
 import Loader from './Components/Loader/Loader';
 import ResetPassword from './Pages/ResetPassword/ResetPassword';

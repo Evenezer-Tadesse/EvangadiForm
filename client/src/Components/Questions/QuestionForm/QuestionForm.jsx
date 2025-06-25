@@ -4,7 +4,7 @@ import { useContext } from 'react';
 import { AuthContext } from '../../../Context/Context';
 import { useNavigate, Link } from 'react-router-dom';
 import { useRef } from 'react';
-import axiosBase from '../../../api/axiosConfig';
+import axiosBase from '../../../Api/axiosConfig';
 import { toast } from 'react-toastify';
 
 const QuestionForm = () => {
