@@ -9,7 +9,7 @@ const authMiddleware = require('./middleware/authMiddleware');
 
 // Initialize Express
 const app = express();
-const port = 8000;
+const port = process.env.PORT || 8000; // Fallback for local dev
 
 // Middleware
 app.use(cors());
@@ -42,11 +42,11 @@ async function start() {
   try {
     const res = await dbConnection.execute("SELECT 'test'");
     app.listen(port, () => {
-      console.log(`✅ Server is running on https://forumbackend.evenhab.com`);
+      console.log(`✅ Server is running on port ${port}`);
     });
-    console.log('✅ Successfully connected to MySQL Database');
+    console.log("✅ Successfully connected to MySQL Database");
   } catch (error) {
-    console.error('❌ Error setting up the server:', error.message);
+    console.error("❌ Error setting up the server:", error.message);
   }
 }
 
