@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import styles from "../../pages/Auth/Auth.module.css";
+import styles from "../../Pages/Auth/Auth.module.css";
 import axiosInstance from "../../api/axiosConfig";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";

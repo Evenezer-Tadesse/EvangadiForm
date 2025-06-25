@@ -1,4 +1,4 @@
-import styles from "../../pages/Auth/Auth.module.css";
+import styles from "../../Pages/Auth/Auth.module.css";
 import { useContext, useRef, useState } from "react";
 import { AuthContext } from "../../Context/Context";
 import { Type } from "../../Utility/actionType";
