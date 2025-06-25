@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import styles from './QuestionForm.module.css';
-import { useContext } from 'react';
-import { AuthContext } from '../../../Context/Context';
-import { useNavigate, Link } from 'react-router-dom';
-import { useRef } from 'react';
-import axiosBase from '../../../Api/axiosConfig';
-import { toast } from 'react-toastify';
+import React, { useEffect, useState } from "react";
+import styles from "./QuestionForm.module.css";
+import { useContext } from "react";
+import { AuthContext } from "../../../Context/Context";
+import { useNavigate, Link } from "react-router-dom";
+import { useRef } from "react";
+import axiosBase from "../../../api/axiosConfig";
+import { toast } from "react-toastify";
 
 const QuestionForm = () => {
   const [{ token }, _] = useContext(AuthContext);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [tag, setTag] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [tag, setTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const QuestionForm = () => {
   const [lastSaved, setLastSaved] = useState(null);
 
   useEffect(() => {
-    const draft = localStorage.getItem('questionDraft');
+    const draft = localStorage.getItem("questionDraft");
     if (draft) {
       const { title, description, timestamp } = JSON.parse(draft);
       setTitle(title);
@@ -34,7 +34,7 @@ const QuestionForm = () => {
     const timer = setTimeout(() => {
       if (title || description) {
         const draft = { title, description, timestamp: new Date().getTime() };
-        localStorage.setItem('questionDraft', JSON.stringify(draft));
+        localStorage.setItem("questionDraft", JSON.stringify(draft));
         setLastSaved(new Date());
       }
     }, 1500);
@@ -48,21 +48,21 @@ const QuestionForm = () => {
     setIsSubmitting(true);
     try {
       await axiosBase.post(
-        '/questions/post-questions',
+        "/questions/post-questions",
         { title, description, tag },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setTitle('');
-      setDescription('');
+      setTitle("");
+      setDescription("");
 
-      posted.current.style.display = 'block';
+      posted.current.style.display = "block";
 
-      localStorage.removeItem('questionDraft');
+      localStorage.removeItem("questionDraft");
       setTimeout(() => {
-        navigate('/');
-        posted.current.style.display = 'none';
+        navigate("/");
+        posted.current.style.display = "none";
       }, 1500);
     } catch (error) {
       toast.error(error.response.data.msg);
@@ -150,7 +150,7 @@ const QuestionForm = () => {
 
       <div
         className={styles.successMessage}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         ref={posted}
       >
         Question posted successfully!
@@ -170,7 +170,7 @@ const QuestionForm = () => {
           {isSubmitting ? (
             <span className={styles.spinner} />
           ) : (
-            'Post Your Question'
+            "Post Your Question"
           )}
         </button>
       </div>

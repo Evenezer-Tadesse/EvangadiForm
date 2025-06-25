@@ -1,14 +1,14 @@
-import { useContext, useEffect, useRef, useState } from 'react';
-import styles from './Home.module.css';
-import { AuthContext } from '../../Context/Context';
-import axiosInstance from '../../Api/axiosConfig';
-import { format, formatDistanceToNow } from 'date-fns';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuestions } from '../../Context/QuestionContext';
-import { FaQuestion } from 'react-icons/fa6';
-import { IoMdArrowRoundUp } from 'react-icons/io';
-import { ClipLoader } from 'react-spinners';
-import Shared from '../../Components/Shared/Shared';
+import { useContext, useEffect, useRef, useState } from "react";
+import styles from "./Home.module.css";
+import { AuthContext } from "../../Context/Context";
+import axiosInstance from "../../api/axiosConfig";
+import { format, formatDistanceToNow } from "date-fns";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuestions } from "../../Context/QuestionContext";
+import { FaQuestion } from "react-icons/fa6";
+import { IoMdArrowRoundUp } from "react-icons/io";
+import { ClipLoader } from "react-spinners";
+import Shared from "../../Components/Shared/Shared";
 
 const Home = () => {
   const [
@@ -19,7 +19,7 @@ const Home = () => {
     _,
   ] = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(''); // State for selected category
+  const [selectedCategory, setSelectedCategory] = useState(""); // State for selected category
 
   const [page, setPage] = useState(1); // Track the current page
   const [hasMore, setHasMore] = useState(false); // Track if there are more questions to load
@@ -35,7 +35,7 @@ const Home = () => {
     searchQuery,
     setSearchQuery,
   } = useQuestions();
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const searchDom = useRef(null);
 
@@ -46,7 +46,7 @@ const Home = () => {
     const fetchQuestions = async () => {
       setIsLoading(true);
       try {
-        const res = await axiosInstance.get('/questions/all-questions', {
+        const res = await axiosInstance.get("/questions/all-questions", {
           params: { page, limit: 20 }, // Pass page and limit as query parameters
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -55,7 +55,7 @@ const Home = () => {
         setQuestions(res.data.questions);
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching questions:', error);
+        console.error("Error fetching questions:", error);
         setError(error.response.data.msg);
         setIsLoading(false);
       }
@@ -79,7 +79,7 @@ const Home = () => {
   const formatQuestionDate = (dateString) => {
     const postedTime = new Date(dateString);
     const timeAgo = formatDistanceToNow(postedTime, { addSuffix: true });
-    const formattedDate = format(postedTime, 'MMM d');
+    const formattedDate = format(postedTime, "MMM d");
     return `${timeAgo} • ${formattedDate}`;
   };
 
@@ -98,7 +98,7 @@ const Home = () => {
         <section className={styles.welcomeSection}>
           <div className={styles.welcomeContent}>
             <h1>
-              Welcome back,{' '}
+              Welcome back,{" "}
               <span className={styles.userName}>{userFirstName}</span>!
             </h1>
             <p className={styles.subtitle}>
@@ -131,7 +131,7 @@ const Home = () => {
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className={styles.clearButton}
               >
                 ×
@@ -164,7 +164,7 @@ const Home = () => {
         <div className={styles.floatingActions}>
           <button
             className={styles.mainAction}
-            onClick={() => navigate('/ask')}
+            onClick={() => navigate("/ask")}
           >
             <span>+</span>
           </button>
@@ -173,14 +173,14 @@ const Home = () => {
             <button
               onClick={() => {
                 searchDom.current.focus();
-                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
               }}
             >
               🔍
             </button>
             <button
               onClick={() =>
-                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+                window.scrollTo({ top: 0, left: 0, behavior: "smooth" })
               }
             >
               <IoMdArrowRoundUp size={30} />
@@ -227,7 +227,7 @@ const Home = () => {
               <div className={styles.loader_wrapper}>
                 <ClipLoader />
               </div>
-            ) : error === 'No questions found' ? (
+            ) : error === "No questions found" ? (
               <p>{error}</p>
             ) : (
               filteredQuestions?.map((question, index) => {

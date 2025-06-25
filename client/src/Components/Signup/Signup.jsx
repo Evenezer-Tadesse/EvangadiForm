@@ -1,10 +1,10 @@
-import styles from '../../pages/Auth/Auth.module.css';
-import axiosInstance from '../../Api/axiosConfig';
-import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa6';
-import { toast } from 'react-toastify';
-import { ClipLoader } from 'react-spinners';
+import styles from "../../pages/Auth/Auth.module.css";
+import axiosInstance from "../../api/axiosConfig";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { toast } from "react-toastify";
+import { ClipLoader } from "react-spinners";
 
 function Signup({
   regInDisplay,
@@ -12,7 +12,7 @@ function Signup({
   setEmptyFields,
   errors,
   setErrors,
-  emptyFields
+  emptyFields,
 }) {
   // State to manage password visibility
   const [showPassword, setShowPassword] = useState(true);
@@ -36,7 +36,7 @@ function Signup({
   // Handle form submission for registration
   async function handleSubmitSignUp(e) {
     e.preventDefault();
-    setErrors(''); // Reset errors before submission
+    setErrors(""); // Reset errors before submission
     setEmptyFields({
       email: false,
       password: false,
@@ -61,8 +61,8 @@ function Signup({
 
     if (Object.keys(newEmptyFields).length > 0) {
       setEmptyFields(newEmptyFields);
-      setErrors('All fields are required.');
-      toast.error('All fields are required.');
+      setErrors("All fields are required.");
+      toast.error("All fields are required.");
 
       // Clear emptyFields after 2 seconds
       setTimeout(() => {
@@ -79,7 +79,7 @@ function Signup({
 
     try {
       setIsLoading(true);
-      await axiosInstance.post('/users/register', {
+      await axiosInstance.post("/users/register", {
         username,
         firstname,
         lastname,
@@ -87,15 +87,15 @@ function Signup({
         password,
       });
 
-      toast.success('Registration successful! You can now log in.');
+      toast.success("Registration successful! You can now log in.");
       setIsLoading(false);
       loginPage(); // Redirect to login page after successful registration
     } catch (error) {
-      console.error('Error during sign up:', error.response.data.msg);
+      console.error("Error during sign up:", error.response.data.msg);
       toast.error(error.response.data.msg);
       setIsLoading(false);
       setErrors(
-        error.response.data.msg || 'An error occurred. Please try again.'
+        error.response.data.msg || "An error occurred. Please try again."
       );
     }
   }
@@ -105,7 +105,7 @@ function Signup({
       <h3 className={styles.join_net}>Join the network</h3>
 
       <p className={styles.alrdy}>
-        Already have an account?{' '}
+        Already have an account?{" "}
         <Link to="" onClick={() => loginPage()}>
           Sign in
         </Link>
@@ -118,7 +118,7 @@ function Signup({
           type="email"
           ref={emailDom2}
           className={`${styles.email_input} ${
-            emptyFields.email ? styles.error_bg : ''
+            emptyFields.email ? styles.error_bg : ""
           }`}
           onChange={() => setEmptyFields({ ...emptyFields, email: false })}
           name="eva_email"
@@ -131,7 +131,7 @@ function Signup({
             id="fname-input"
             type="text"
             className={`${styles.f_name} ${
-              emptyFields.firstname ? styles.error_bg : ''
+              emptyFields.firstname ? styles.error_bg : ""
             }`}
             onChange={() =>
               setEmptyFields({ ...emptyFields, firstname: false })
@@ -145,7 +145,7 @@ function Signup({
             id="lname-input"
             type="text"
             className={`${styles.l_name} ${
-              emptyFields.lastname ? styles.error_bg : ''
+              emptyFields.lastname ? styles.error_bg : ""
             }`}
             onChange={() => setEmptyFields({ ...emptyFields, lastname: false })}
             name="lastname"
@@ -156,7 +156,7 @@ function Signup({
             ref={userNameDom}
             type="text"
             className={`${styles.l_name} ${styles.userName_input} ${
-              emptyFields.username ? styles.error_bg : ''
+              emptyFields.username ? styles.error_bg : ""
             }`}
             onChange={() => setEmptyFields({ ...emptyFields, username: false })}
             name="User name"
@@ -167,9 +167,9 @@ function Signup({
         <div className={styles.paswrd_insert}>
           <input
             ref={passwordDom2}
-            type={showPassword ? 'password' : 'text'}
+            type={showPassword ? "password" : "text"}
             className={`${styles.password__input} ${
-              emptyFields.password ? styles.error_bg : ''
+              emptyFields.password ? styles.error_bg : ""
             }`}
             onChange={() => setEmptyFields({ ...emptyFields, password: false })}
             name="password"
@@ -184,11 +184,11 @@ function Signup({
         </div>
 
         <p className={`${styles.term_policy} ${styles.small}`}>
-          I agree to the{' '}
+          I agree to the{" "}
           <Link to="https://legacy.evangadi.com/legal/privacy/">
             privacy policy
-          </Link>{' '}
-          and{' '}
+          </Link>{" "}
+          and{" "}
           <Link to="https://legacy.evangadi.com/legal/terms/">
             terms of service
           </Link>
@@ -200,7 +200,7 @@ function Signup({
           className={`${styles.butn_login} butn_login`}
           type="submit"
         >
-          {isLoading ? <ClipLoader color='#fff' /> : 'Agree and Join'}
+          {isLoading ? <ClipLoader color="#fff" /> : "Agree and Join"}
         </button>
 
         <Link to="" className={styles.already} onClick={() => loginPage()}>

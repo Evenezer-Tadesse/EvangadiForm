@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
-import styles from '../../pages/Auth/Auth.module.css';
-import axiosInstance from '../../Api/axiosConfig';
-import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { ClipLoader } from 'react-spinners';
+import { useRef, useState } from "react";
+import styles from "../../pages/Auth/Auth.module.css";
+import axiosInstance from "../../api/axiosConfig";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { ClipLoader } from "react-spinners";
 
 function Reset({
   setErrors,
@@ -22,28 +22,28 @@ function Reset({
 
   async function handlePasswordResetRequest(e) {
     e.preventDefault();
-    setErrors('');
+    setErrors("");
     const email = emailDom3.current.value.trim();
 
     // Check for empty fields
     if (!email) {
       setEmptyFields({ email: true });
-      setErrors('Email is required.');
-      toast.error('Email is required.');
+      setErrors("Email is required.");
+      toast.error("Email is required.");
       return;
     }
 
     try {
       setIsLoading(true);
-      await axiosInstance.post('/users/reset-password', { email });
-      toast.success('Password reset link sent to your email.');
+      await axiosInstance.post("/users/reset-password", { email });
+      toast.success("Password reset link sent to your email.");
       setIsLoading(false);
       setResetPage(styles.display); // Hide reset page
-      setLogInDisplay(''); // Show login page
+      setLogInDisplay(""); // Show login page
     } catch (error) {
-      console.error('Password reset error:', error);
+      console.error("Password reset error:", error);
       setErrors(
-        error?.response?.data?.msg || 'Error sending reset link. Try again.'
+        error?.response?.data?.msg || "Error sending reset link. Try again."
       );
       setIsLoading(false);
     }
@@ -62,7 +62,7 @@ function Reset({
           ref={emailDom3}
           type="email"
           className={`${styles.email_input} ${
-            emptyFields.email ? styles.error_bg : ''
+            emptyFields.email ? styles.error_bg : ""
           }`}
           onChange={() => setEmptyFields((prev) => ({ ...prev, email: false }))}
           name="emailaddress"
@@ -70,7 +70,7 @@ function Reset({
         />
 
         <button className={`${styles.butn_login} butn_login`} type="submit">
-          {isLoading ? <ClipLoader color="#fff" /> : 'Send Reset Link'}
+          {isLoading ? <ClipLoader color="#fff" /> : "Send Reset Link"}
         </button>
       </form>
 

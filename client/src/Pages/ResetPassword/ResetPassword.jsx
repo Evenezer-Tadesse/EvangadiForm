@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosInstance from "../../Api/axiosConfig";
+import axiosInstance from "../../api/axiosConfig";
 import styles from "./ResetPassword.module.css";
 import { toast } from "react-toastify";
 

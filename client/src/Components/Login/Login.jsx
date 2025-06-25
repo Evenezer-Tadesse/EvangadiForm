@@ -1,12 +1,12 @@
-import styles from '../../pages/Auth/Auth.module.css';
-import { useContext, useRef, useState } from 'react';
-import { AuthContext } from '../../Context/Context';
-import { Type } from '../../Utility/actionType';
-import axiosInstance from '../../Api/axiosConfig';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa6';
-import { toast } from 'react-toastify';
-import { ClipLoader } from 'react-spinners';
+import styles from "../../pages/Auth/Auth.module.css";
+import { useContext, useRef, useState } from "react";
+import { AuthContext } from "../../Context/Context";
+import { Type } from "../../Utility/actionType";
+import axiosInstance from "../../api/axiosConfig";
+import { Link, useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { toast } from "react-toastify";
+import { ClipLoader } from "react-spinners";
 
 function Login({
   setErrors,
@@ -37,7 +37,7 @@ function Login({
   async function handleSubmitLogin(e) {
     e.preventDefault();
 
-    setErrors(''); // Reset errors before submission
+    setErrors(""); // Reset errors before submission
     setEmptyFields({
       email: false,
       password: false,
@@ -57,8 +57,8 @@ function Login({
 
     if (Object.keys(newEmptyFields).length > 0) {
       setEmptyFields(newEmptyFields);
-      setErrors('All fields are required.');
-      toast.error('All fields are required.');
+      setErrors("All fields are required.");
+      toast.error("All fields are required.");
 
       // Clear emptyFields after 2 seconds
       setTimeout(() => {
@@ -75,14 +75,14 @@ function Login({
 
     try {
       setIsLoading(true);
-      const res = await axiosInstance.post('/users/login', {
+      const res = await axiosInstance.post("/users/login", {
         email,
         password,
       });
 
-      localStorage.setItem('token', res.data.token); // Store token in localStorage
+      localStorage.setItem("token", res.data.token); // Store token in localStorage
 
-      localStorage.setItem('user', JSON.stringify(res.data.user)); // Store user info in localStorage
+      localStorage.setItem("user", JSON.stringify(res.data.user)); // Store user info in localStorage
 
       dispatch({
         type: Type.ADD_USER,
@@ -93,9 +93,9 @@ function Login({
       });
 
       setIsLoading(false);
-      navigate('/', { replace: true }); // Redirect to home page after successful login
+      navigate("/", { replace: true }); // Redirect to home page after successful login
     } catch (error) {
-      console.error('Error during Login:', error);
+      console.error("Error during Login:", error);
       toast.error(error?.response?.data?.msg);
       setErrors(error?.response?.data?.msg);
       setIsLoading(false);
@@ -103,7 +103,7 @@ function Login({
   }
 
   function passwordReset() {
-    setErrors(''); // Reset errors
+    setErrors(""); // Reset errors
     setEmptyFields({
       email: false,
       password: false,
@@ -111,7 +111,7 @@ function Login({
       firstname: false,
       lastname: false,
     }); // Reset empty fields
-    setResetPage('');
+    setResetPage("");
     setLogInDisplay(styles.display);
     setRegInDisplay(styles.display);
   }
@@ -121,7 +121,7 @@ function Login({
       <h3 className={styles.login_account}>Login to your account</h3>
 
       <p className={styles.alrdy}>
-        Don't have an account?{' '}
+        Don't have an account?{" "}
         <Link
           to=""
           className={styles.creat_account}
@@ -139,17 +139,17 @@ function Login({
           type="email"
           ref={emailDom1}
           className={`${styles.email_input} ${styles.email_input_login} ${
-            emptyFields.email ? styles.error_bg : ''
+            emptyFields.email ? styles.error_bg : ""
           }`}
           onChange={() => setEmptyFields({ ...emptyFields, email: false })}
           placeholder="Email Address"
         />
 
         <input
-          type={showPassword ? 'password' : 'text'}
+          type={showPassword ? "password" : "text"}
           ref={passwordDom1}
           className={`${styles.password__input} ${
-            emptyFields.password ? styles.error_bg : ''
+            emptyFields.password ? styles.error_bg : ""
           }`}
           onChange={() => setEmptyFields({ ...emptyFields, password: false })}
           placeholder="Password"
@@ -173,7 +173,7 @@ function Login({
         </p>
 
         <button type="submit" className={`butn_login ${styles.butn_login}`}>
-          {isLoading ? <ClipLoader color="#fff" /> : 'Login'}
+          {isLoading ? <ClipLoader color="#fff" /> : "Login"}
         </button>
       </form>
     </div>

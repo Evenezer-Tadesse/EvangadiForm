@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import styles from "./AnswerPage.module.css";
-import axiosBase from "../../Api/axiosConfig";
+import axiosBase from "../../api/axiosConfig";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Context/Context";
 import { format, formatDistanceToNow } from "date-fns";
