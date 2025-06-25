@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import styles from "./QuestionForm.module.css";
+import styles from "./Questionform.module.css";
 import { useContext } from "react";
 import { AuthContext } from "../../../Context/Context";
 import { useNavigate, Link } from "react-router-dom";
