@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import styles from '../../pages/Auth/Auth.module.css';
+import styles from '../../Pages/Auth/Auth.module.css';
 
 function About() {
   return (
