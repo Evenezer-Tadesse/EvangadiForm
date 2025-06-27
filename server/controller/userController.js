@@ -1,5 +1,5 @@
 require('dotenv').config();
-const dbConnection = require('../db/dbConfig');
+const dbPool = require('../db/dbConfig');
 const { StatusCodes } = require('http-status-codes');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -11,7 +11,7 @@ async function register(req, res) {
   const { username, firstname, lastname, email, password } = req.body;
   try {
 
-    const [user] = await dbConnection.query(
+    const [user] = await dbPool.query(
       'select username, userId from users where username=? && email=?',
       [username, email]
     );
@@ -22,7 +22,7 @@ async function register(req, res) {
       });
     }
 
-    const [userEmail] = await dbConnection.query(
+    const [userEmail] = await dbPool.query(
       'select email, userId from users where email=?',
       [email]
     );
@@ -33,7 +33,7 @@ async function register(req, res) {
       });
     }
 
-        const [userName] = await dbConnection.query(
+        const [userName] = await dbPool.query(
       'select username, userId from users where username=?',
       [username]
     );
@@ -58,7 +58,7 @@ async function register(req, res) {
     const genString = await bcrypt.genSalt(10);
     const hashedPswrd = await bcrypt.hash(password, genString);
 
-    await dbConnection.query(
+    await dbPool.query(
       `INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)`,
       [username, firstname, lastname, email, hashedPswrd]
     );
@@ -83,7 +83,7 @@ async function loginUser(req, res) {
     });
   }
   try {
-    const [user] = await dbConnection.query(
+    const [user] = await dbPool.query(
       'SELECT userid, username, password, firstname FROM users WHERE email = ?',
       [email]
     );
@@ -145,7 +145,7 @@ async function resetPassword(req, res) {
   }
 
   try {
-    const [user] = await dbConnection.query(
+    const [user] = await dbPool.query(
       'SELECT * FROM users WHERE email = ?',
       [email]
     );
@@ -165,7 +165,7 @@ async function resetPassword(req, res) {
 
     // Save the hashed token and expiration time in the database
     const expirationTime = new Date(Date.now() + 3600000); // Token valid for 1 hour
-    await dbConnection.query(
+    await dbPool.query(
       'UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE email = ?',
       [hashedToken, expirationTime, email]
     );
@@ -221,7 +221,7 @@ async function verifyResetToken(req, res) {
   try {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const [user] = await dbConnection.query(
+    const [user] = await dbPool.query(
       'SELECT * FROM users WHERE reset_token = ? AND reset_token_expiration > ?',
       [hashedToken, new Date()]
     );
@@ -235,7 +235,7 @@ async function verifyResetToken(req, res) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    await dbConnection.query(
+    await dbPool.query(
       'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiration = NULL WHERE reset_token = ?',
       [hashedPassword, hashedToken]
     );

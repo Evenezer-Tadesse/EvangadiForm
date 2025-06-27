@@ -1,4 +1,4 @@
-const dbConnection = require("../db/dbConfig");
+const dbPool = require("../db/dbConfig");
 
 const { StatusCodes } = require("http-status-codes");
 
@@ -12,7 +12,7 @@ async function postAnswers(req, res) {
     });
   }
   try {
-    await dbConnection.query(
+    await dbPool.query(
       "INSERT INTO answers(userid, questionid, answer) VALUES (?, ?, ?)",
       [userId, questionid, answer]
     );
@@ -33,7 +33,7 @@ async function getAllAnswer(req, res) {
   const userId = req.user.userid; // Get the logged-in user's ID
 
   try {
-    const [results] = await dbConnection.query(
+    const [results] = await dbPool.query(
       `SELECT 
         answers.answerid,
         answers.answer AS content,
@@ -75,7 +75,7 @@ async function deleteAnswer(req, res) {
   const answerId = req.params.id; // Get the answer ID from the route
 
   try {
-    const [answer] = await dbConnection.query(
+    const [answer] = await dbPool.query(
       "SELECT userid FROM answers WHERE answerid = ?",
       [answerId]
     );
@@ -94,7 +94,7 @@ async function deleteAnswer(req, res) {
       });
     }
 
-    await dbConnection.query("DELETE FROM answers WHERE answerid = ?", [
+    await dbPool.query("DELETE FROM answers WHERE answerid = ?", [
       answerId,
     ]);
 
@@ -118,7 +118,7 @@ async function voteAnswer(req, res) {
   }
 
   try {
-    const [existingVote] = await dbConnection.query(
+    const [existingVote] = await dbPool.query(
       "SELECT vote_type FROM answer_votes WHERE userid = ? AND answerid = ?",
       [userId, answerId]
     );
@@ -128,13 +128,13 @@ async function voteAnswer(req, res) {
 
       if (currentVote === voteType) {
         // User clicked the same vote again → remove it
-        await dbConnection.query(
+        await dbPool.query(
           "DELETE FROM answer_votes WHERE userid = ? AND answerid = ?",
           [userId, answerId]
         );
 
         const column = voteType === "upvote" ? "likes" : "dislikes";
-        await dbConnection.query(
+        await dbPool.query(
           `UPDATE answers SET ${column} = ${column} - 1 WHERE answerid = ?`,
           [answerId]
         );
@@ -142,7 +142,7 @@ async function voteAnswer(req, res) {
         return res.status(200).json({ msg: `${voteType} removed` });
       } else {
         // User switched vote (upvote ⇄ downvote)
-        await dbConnection.query(
+        await dbPool.query(
           "UPDATE answer_votes SET vote_type = ? WHERE userid = ? AND answerid = ?",
           [voteType, userId, answerId]
         );
@@ -150,7 +150,7 @@ async function voteAnswer(req, res) {
         const addColumn = voteType === "upvote" ? "likes" : "dislikes";
         const removeColumn = voteType === "upvote" ? "dislikes" : "likes";
 
-        await dbConnection.query(
+        await dbPool.query(
           `UPDATE answers SET ${addColumn} = ${addColumn} + 1, ${removeColumn} = ${removeColumn} - 1 WHERE answerid = ?`,
           [answerId]
         );
@@ -159,13 +159,13 @@ async function voteAnswer(req, res) {
       }
     } else {
       // First time voting
-      await dbConnection.query(
+      await dbPool.query(
         "INSERT INTO answer_votes (userid, answerid, vote_type) VALUES (?, ?, ?)",
         [userId, answerId, voteType]
       );
 
       const column = voteType === "upvote" ? "likes" : "dislikes";
-      await dbConnection.query(
+      await dbPool.query(
         `UPDATE answers SET ${column} = ${column} + 1 WHERE answerid = ?`,
         [answerId]
       );
@@ -192,7 +192,7 @@ async function editAnswer(req, res) {
 
   try {
     // Check if the answer exists and belongs to the logged-in user
-    const [answer] = await dbConnection.query(
+    const [answer] = await dbPool.query(
       "SELECT userid FROM answers WHERE answerid = ?",
       [answerId]
     );
@@ -212,7 +212,7 @@ async function editAnswer(req, res) {
     }
 
     // Update the answer content
-    await dbConnection.query(
+    await dbPool.query(
       "UPDATE answers SET answer = ? WHERE answerid = ?",
       [content, answerId]
     );
@@ -243,7 +243,7 @@ async function addComment(req, res) {
   }
 
   try {
-    await dbConnection.query(
+    await dbPool.query(
       "INSERT INTO comments (answerid, userid, content) VALUES (?, ?, ?)",
       [answerId, userId, content]
     );
@@ -265,7 +265,7 @@ async function getComments(req, res) {
   const answerId = req.params.answerId; // Get the answer ID from the route
 
   try {
-    const [comments] = await dbConnection.query(
+    const [comments] = await dbPool.query(
       `SELECT 
         comments.commentid,
         comments.content,
@@ -294,7 +294,7 @@ async function deleteComment(req, res) {
   const commentId = req.params.commentId; // Get the comment ID from the route
 
   try {
-    const [comment] = await dbConnection.query(
+    const [comment] = await dbPool.query(
       "SELECT userid FROM comments WHERE commentid = ?",
       [commentId]
     );
@@ -313,7 +313,7 @@ async function deleteComment(req, res) {
       });
     }
 
-    await dbConnection.query("DELETE FROM comments WHERE commentid = ?", [
+    await dbPool.query("DELETE FROM comments WHERE commentid = ?", [
       commentId,
     ]);
 

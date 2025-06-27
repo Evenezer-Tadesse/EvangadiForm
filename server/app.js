@@ -2,14 +2,14 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 // db connection
-const dbConnection = require('./db/dbConfig');
+const dbPool = require('./db/dbConfig');
 
 // authentication middleware
 const authMiddleware = require('./middleware/authMiddleware');
 
 // Initialize Express
 const app = express();
-const port = process.env.PORT || 8000; // Fallback for local dev
+const port = process.env.PORT || 5432; // Fallback for local dev
 
 // Middleware
 app.use(cors());
@@ -40,11 +40,12 @@ app.use('/api/answers', authMiddleware, answerRoutes);
 
 async function start() {
   try {
-    const res = await dbConnection.execute("SELECT 'test'");
+    const res = await dbPool.query("SELECT 'test'");
     app.listen(port, () => {
       console.log(`✅ Server is running on port ${port}`);
     });
-    console.log("✅ Successfully connected to MySQL Database");
+    console.log("✅ Successfully connected to PostgreSQL Database");
+
   } catch (error) {
     console.error("❌ Error setting up the server:", error.message);
   }

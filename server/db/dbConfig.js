@@ -1,17 +1,48 @@
-const mysql = require("mysql2");
+const { Pool } = require("pg");
+const fs = require("fs"); // Add this line to import fs module
 
-// ✅ Add SSL option for cloud providers like Aiven or PlanetScale
-const dbConnection = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: 8000, // Optional: in case it's different from default
-  ssl: {
-    rejectUnauthorized: true,
-  },
-  connectionLimit: 10,
-  multipleStatements: true,
+const isProduction = process.env.NODE_ENV === "production";
+
+// Configure SSL based on environment
+let sslConfig = false;
+if (isProduction) {
+  try {
+    // Using the certificate you downloaded
+    sslConfig = {
+      ca: fs.readFileSync("render-cert.pem"),
+      rejectUnauthorized: true,
+    };
+    console.log("Using custom SSL certificate");
+  } catch (err) {
+    console.error(
+      "Failed to read SSL certificate, using fallback:",
+      err.message
+    );
+    sslConfig = { rejectUnauthorized: false };
+  }
+}
+
+// Create the pool instance
+const dbPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: sslConfig,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
-module.exports = dbConnection.promise();
+// Log connection events
+dbPool.on("connect", () => console.log("Database connected"));
+dbPool.on("error", (err) => console.error("Database error:", err));
+dbPool.on("acquire", () => console.log("Connection acquired"));
+dbPool.on("remove", () => console.log("Connection removed"));
+
+// Keep-alive for Render free tier
+setInterval(() => {
+  dbPool
+    .query("SELECT 1")
+    .then(() => console.log("Keep-alive ping successful"))
+    .catch((e) => console.error("Keep-alive failed:", e));
+}, 300000); // Every 5 minutes
+
+module.exports = dbPool;

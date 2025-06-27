@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const dbConnection = require("../db/dbConfig");
+const dbPool = require("../db/dbConfig");
 const { v4: uuidv4 } = require("uuid");
 
 async function postQuestion(req, res) {
@@ -16,7 +16,7 @@ async function postQuestion(req, res) {
   }
 
   try {
-    await dbConnection.query(
+    await dbPool.query(
       "INSERT INTO questions (userid, questionid, title, description, tag) VALUES (?, ?, ?, ?, ?)",
       [userId, questionid, title, description, tag]
     );
@@ -37,7 +37,7 @@ async function getAllQuestions(req, res) {
   const offset = (page - 1) * limit; // Calculate offset for pagination
 
   try {
-    const [results] = await dbConnection.query(
+    const [results] = await dbPool.query(
       `
       SELECT 
         questions.id AS question_id,
@@ -55,7 +55,7 @@ async function getAllQuestions(req, res) {
       [parseInt(limit), parseInt(offset)]
     );
 
-    // const [totalCount] = await dbConnection.query(
+    // const [totalCount] = await dbPool.query(
     //   `SELECT COUNT(*) AS total FROM questions`
     // );
 
@@ -81,7 +81,7 @@ async function getAllQuestions(req, res) {
 async function getSingleQuestion(req, res) {
   const questionId = req.params.id; // Extract question ID from route parameter
   try {
-    const [results] = await dbConnection.query(
+    const [results] = await dbPool.query(
       `SELECT 
           questions.id,
           questions.questionid,
@@ -129,7 +129,7 @@ async function editQuestion(req, res) {
   }
 
   try {
-    const [question] = await dbConnection.query(
+    const [question] = await dbPool.query(
       "SELECT userid FROM questions WHERE id = ?",
       [questionId]
     );
@@ -148,7 +148,7 @@ async function editQuestion(req, res) {
       });
     }
 
-    await dbConnection.query(
+    await dbPool.query(
       "UPDATE questions SET title = ?, description = ? WHERE id = ?",
       [title, description, questionId]
     );
@@ -168,7 +168,7 @@ async function deleteQuestion(req, res) {
   const questionId = req.params.id; // Get the question ID from the route
 
   try {
-    const [question] = await dbConnection.query(
+    const [question] = await dbPool.query(
       "SELECT userid FROM questions WHERE id = ?",
       [questionId]
     );
@@ -187,10 +187,10 @@ async function deleteQuestion(req, res) {
       });
     }
 
-    await dbConnection.query("DELETE FROM questions WHERE id = ?", [
+    await dbPool.query("DELETE FROM questions WHERE id = ?", [
       questionId,
     ]);
-    await dbConnection.query("DELETE FROM questions WHERE id = ?", [
+    await dbPool.query("DELETE FROM questions WHERE id = ?", [
       questionId,
     ]);
     res.status(StatusCodes.OK).json({ msg: "Question deleted successfully" });
