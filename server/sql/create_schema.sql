@@ -62,13 +62,15 @@ CREATE TABLE IF NOT EXISTS answer_votes (
 
  */
 
- DROP TABLE IF EXISTS answer_votes CASCADE;
+BEGIN;
+
+DROP TABLE IF EXISTS answer_votes CASCADE;
 DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS answers CASCADE;
 DROP TABLE IF EXISTS questions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TYPE IF EXISTS vote_type CASCADE;
 
--- Create ENUM type for vote_type
 CREATE TYPE vote_type AS ENUM ('upvote', 'downvote');
 
 CREATE TABLE users (
@@ -84,14 +86,12 @@ CREATE TABLE users (
 CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
   questionid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-  userid INT NOT NULL,
+  userid INT NOT NULL REFERENCES users(userId) ON DELETE CASCADE,
   title VARCHAR(100) NOT NULL,
   description TEXT NOT NULL,
   tags VARCHAR(100)[],
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  FOREIGN KEY (userid) REFERENCES users(userId) ON DELETE CASCADE
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 CREATE TABLE answers (
   answerid SERIAL PRIMARY KEY,
   userid INT NOT NULL,
@@ -124,7 +124,11 @@ CREATE TABLE answer_votes (
 );
 
 -- Indexes for performance
+COMMIT;
+
+BEGIN;  -- Separate transaction for indexes
 CREATE INDEX idx_questions_user ON questions(userid);
 CREATE INDEX idx_answers_question ON answers(questionid);
 CREATE INDEX idx_comments_answer ON comments(answerid);
 CREATE INDEX idx_votes_answer ON answer_votes(answerid);
+COMMIT;
