@@ -1,74 +1,53 @@
-require('dotenv').config();
-const dbPool = require('../db/dbConfig');
-const { StatusCodes } = require('http-status-codes');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+require("dotenv").config();
+const dbPool = require("../db/dbConfig");
+const { StatusCodes } = require("http-status-codes");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 async function register(req, res) {
-  // Logic for user registration
   const { username, firstname, lastname, email, password } = req.body;
-  try {
 
-    const [user] = await dbPool.query(
-      'select username, userId from users where username=? && email=?',
+  if (!username || !email || !firstname || !lastname || !password) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      error: "Bad Request",
+      msg: "Please provide full information",
+    });
+  }
+
+  if (password.length < 8) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Password must be at least 8 characters",
+    });
+  }
+
+  try {
+    const existingUser = await dbPool.query(
+      "SELECT * FROM users WHERE username = $1 OR email = $2",
       [username, email]
     );
-    if (user.length > 0) {
+
+    if (existingUser.rows.length > 0) {
       return res.status(StatusCodes.CONFLICT).json({
-        error: 'Conflict',
-        msg: 'User already existed',
+        error: "Conflict",
+        msg: "User already exists",
       });
     }
 
-    const [userEmail] = await dbPool.query(
-      'select email, userId from users where email=?',
-      [email]
-    );
-    if (userEmail.length > 0) {
-      return res.status(StatusCodes.CONFLICT).json({
-        error: 'Conflict',
-        msg: 'User E-Mail already existed',
-      });
-    }
-
-        const [userName] = await dbPool.query(
-      'select username, userId from users where username=?',
-      [username]
-    );
-    if (userName.length > 0) {
-      return res.status(StatusCodes.CONFLICT).json({
-        error: 'Conflict',
-        msg: 'User Name already existed',
-      });
-    }
-
-    if (!username || !email || !firstname || !lastname || !password) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        error: 'Bad Request',
-        msg: 'Please, provide full information',
-      });
-    }
-    if (password.length < 8) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        msg: 'password length should be at least 8 character',
-      });
-    }
-    const genString = await bcrypt.genSalt(10);
-    const hashedPswrd = await bcrypt.hash(password, genString);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await dbPool.query(
-      `INSERT INTO users (username, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?)`,
-      [username, firstname, lastname, email, hashedPswrd]
+      `INSERT INTO users (username, firstname, lastname, email, password) VALUES ($1, $2, $3, $4, $5)`,
+      [username, firstname, lastname, email, hashedPassword]
     );
-    
-    return res
-      .status(StatusCodes.CREATED)
-      .json({ msg: 'User registered successfully' });
+
+    return res.status(StatusCodes.CREATED).json({
+      msg: "User registered successfully",
+    });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      error: 'Server Error',
+      error: "Server Error",
       msg: error.message,
     });
   }
@@ -76,106 +55,105 @@ async function register(req, res) {
 
 async function loginUser(req, res) {
   const { email, password } = req.body;
+
   if (!email || !password) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      error: 'Bad Request',
-      msg: 'Please provide all required fields!',
+      error: "Bad Request",
+      msg: "Please provide all required fields!",
     });
   }
+
   try {
-    const [user] = await dbPool.query(
-      'SELECT userid, username, password, firstname FROM users WHERE email = ?',
+    const result = await dbPool.query(
+      "SELECT userid, username, password, firstname FROM users WHERE email = $1",
       [email]
     );
 
-    if (user.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: 'Unauthorized',
-        msg: 'Invalid credential',
+        error: "Unauthorized",
+        msg: "Invalid credential",
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user[0].password);
+    const user = result.rows[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
-        error: 'Unauthorized',
-        msg: 'Invalid password',
+        error: "Unauthorized",
+        msg: "Invalid password",
       });
     }
 
-    const username = user[0].username;
-    const userid = user[0].userid;
-    const firstname = user[0].firstname;
-    const token = jwt.sign({ username, userid }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    });
+    const token = jwt.sign(
+      { username: user.username, userid: user.userid },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.status(StatusCodes.OK).json({
-      msg: 'User login successful',
+      msg: "User login successful",
       token,
       user: {
-        username,
-        firstname,
-        userid,
+        username: user.username,
+        firstname: user.firstname,
+        userid: user.userid,
       },
     });
   } catch (err) {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: 'Server error' });
     console.error(err.message);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: "Server error" });
   }
 }
 
 async function checkUser(req, res) {
-  // Logic to check user status
-  const { username, userid } = req.user; // Extract user info from request object
+  const { username, userid } = req.user;
 
-  res
-    .status(StatusCodes.OK)
-    .json({ msg: 'User is authenticated', username, userid });
+  res.status(StatusCodes.OK).json({
+    msg: "User is authenticated",
+    username,
+    userid,
+  });
 }
 
-// Reset password
 async function resetPassword(req, res) {
   const { email } = req.body;
 
   if (!email) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: 'Please provide an email address',
+      msg: "Please provide an email address",
     });
   }
 
   try {
-    const [user] = await dbPool.query(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
+    const result = await dbPool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
-    if (user.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(StatusCodes.NOT_FOUND).json({
-        msg: 'User not found with this email',
+        msg: "User not found with this email",
       });
     }
 
-    // Generate a reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(resetToken)
-      .digest('hex');
+      .digest("hex");
+    const expirationTime = new Date(Date.now() + 3600000); // 1 hour
 
-    // Save the hashed token and expiration time in the database
-    const expirationTime = new Date(Date.now() + 3600000); // Token valid for 1 hour
     await dbPool.query(
-      'UPDATE users SET reset_token = ?, reset_token_expiration = ? WHERE email = ?',
+      "UPDATE users SET reset_token = $1, reset_token_expiration = $2 WHERE email = $3",
       [hashedToken, expirationTime, email]
     );
 
-    // Send email with reset link
     const transporter = nodemailer.createTransport({
-      service: 'Gmail',
+      service: "Gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD, 
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 
@@ -183,72 +161,78 @@ async function resetPassword(req, res) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Password Reset Request',
-      html: `<p>You requested a password reset. Click the link below to reset your password:</p>
-              <a href="${resetLink}" target="_blank">${resetLink}</a>
-              <p>If you did not request this, please ignore this email.</p>`,
+      subject: "Password Reset Request",
+      html: `
+        <p>You requested a password reset. Click the link below to reset your password:</p>
+        <a href="${resetLink}" target="_blank">${resetLink}</a>
+        <p>If you did not request this, please ignore this email.</p>
+      `,
     };
 
     await transporter.sendMail(mailOptions);
 
     return res.status(StatusCodes.OK).json({
-      msg: 'Password reset link sent to your email',
+      msg: "Password reset link sent to your email",
     });
   } catch (error) {
     console.error(error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: 'Server error',
+      msg: "Server error",
     });
   }
 }
 
 async function verifyResetToken(req, res) {
   const { token, newPassword } = req.body;
-  console.log("Received token:", token);
 
   if (!token || !newPassword) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: 'Please provide a valid token and new password',
+      msg: "Please provide a valid token and new password",
     });
   }
 
   if (newPassword.length < 8) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: 'Password should be at least 8 characters',
+      msg: "Password should be at least 8 characters",
     });
   }
 
   try {
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-    const [user] = await dbPool.query(
-      'SELECT * FROM users WHERE reset_token = ? AND reset_token_expiration > ?',
+    const result = await dbPool.query(
+      "SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiration > $2",
       [hashedToken, new Date()]
     );
 
-    if (user.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
-        msg: 'Invalid or expired reset token',
+        msg: "Invalid or expired reset token",
       });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await dbPool.query(
-      'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiration = NULL WHERE reset_token = ?',
+      "UPDATE users SET password = $1, reset_token = NULL, reset_token_expiration = NULL WHERE reset_token = $2",
       [hashedPassword, hashedToken]
     );
 
     return res.status(StatusCodes.OK).json({
-      msg: 'Password updated successfully',
+      msg: "Password updated successfully",
     });
   } catch (error) {
     console.error(error.message);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: 'Server error',
+      msg: "Server error",
     });
   }
 }
 
-module.exports = { register, loginUser, checkUser, resetPassword, verifyResetToken };
+module.exports = {
+  register,
+  loginUser,
+  checkUser,
+  resetPassword,
+  verifyResetToken,
+};

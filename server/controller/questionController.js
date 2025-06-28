@@ -1,13 +1,10 @@
 const { StatusCodes } = require("http-status-codes");
 const dbPool = require("../db/dbConfig");
-const { v4: uuidv4 } = require("uuid");
 
 async function postQuestion(req, res) {
   const userId = req.user.userid;
-
-  const questionid = uuidv4();
-
   const { title, description, tag } = req.body;
+
   if (!title || !description) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       error: "Bad Request",
@@ -16,13 +13,20 @@ async function postQuestion(req, res) {
   }
 
   try {
-    await dbPool.query(
-      "INSERT INTO questions (userid, questionid, title, description, tag) VALUES (?, ?, ?, ?, ?)",
-      [userId, questionid, title, description, tag]
+    // Convert tag string to PostgreSQL array format
+    const tagsArray = tag ? tag.split(",").map((t) => t.trim()) : null;
+
+    const result = await dbPool.query(
+      `INSERT INTO questions (userid, title, description, tags) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING questionid`,
+      [userId, title, description, tagsArray]
     );
-    res
-      .status(StatusCodes.CREATED)
-      .json({ msg: "Question created successfully", questionid });
+
+    res.status(StatusCodes.CREATED).json({
+      msg: "Question created successfully",
+      questionid: result.rows[0].questionid,
+    });
   } catch (error) {
     console.log(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -33,172 +37,166 @@ async function postQuestion(req, res) {
 }
 
 async function getAllQuestions(req, res) {
-  const { page = 1, limit = 10 } = req.query; // Extract page and limit from query parameters
-  const offset = (page - 1) * limit; // Calculate offset for pagination
+  const { page = 1, limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
 
   try {
-    const [results] = await dbPool.query(
-      `
+    const query = `
       SELECT 
-        questions.id AS question_id,
-        questions.title,
-        questions.tag,
-        questions.userid,
-        questions.description AS content,
-        users.username,
-        questions.created_at,
-        users.firstname
-      FROM questions
-      JOIN users ON questions.userid = users.userid
-      ORDER BY questions.id DESC
-      LIMIT ? OFFSET ?`,
-      [parseInt(limit), parseInt(offset)]
-    );
+        q.id AS question_id,
+        q.questionid,
+        q.title,
+        q.tags AS tag,
+        q.userid,
+        q.description AS content,
+        u.username,
+        q.created_at,
+        u.firstname,
+        COUNT(a.answerid) AS answer_count
+      FROM questions q
+      JOIN users u ON q.userid = u.userid
+      LEFT JOIN answers a ON q.questionid = a.questionid
+      GROUP BY q.id, u.userid
+      ORDER BY q.created_at DESC
+      LIMIT $1 OFFSET $2
+    `;
 
-    // const [totalCount] = await dbPool.query(
-    //   `SELECT COUNT(*) AS total FROM questions`
-    // );
+    const result = await dbPool.query(query, [limit, offset]);
 
-    // Handle case where no questions are found
-    if (!results || results.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(StatusCodes.NOT_FOUND).json({
         msg: "No questions found",
       });
     }
 
-    // Return the fetched questions
-    res.status(StatusCodes.OK).json({ questions: results });
+    res.status(StatusCodes.OK).json({ questions: result.rows });
   } catch (error) {
     console.error(error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       error: "Internal Server Error",
-      msg: "An unexpected error occurred.",
+      msg: error.message,
     });
   }
-  // res.send("all question here");
 }
 
 async function getSingleQuestion(req, res) {
-  const questionId = req.params.id; // Extract question ID from route parameter
-  try {
-    const [results] = await dbPool.query(
-      `SELECT 
-          questions.id,
-          questions.questionid,
-          questions.title,
-          questions.userid,
-          questions.description AS content,
-          questions.tag,
-          questions.created_at,
-          users.username
-        FROM questions
-        JOIN users ON questions.userid = users.userid
-        WHERE questions.id = ?`,
-      [questionId]
-    );
+  const questionId = req.params.id;
 
-    // Handle case where the question does not exist
-    if (results.length === 0) {
+  try {
+    const query = `
+      SELECT 
+        q.id,
+        q.questionid,
+        q.title,
+        q.userid,
+        q.description AS content,
+        q.tags AS tag,
+        q.created_at,
+        u.username,
+        u.firstname
+      FROM questions q
+      JOIN users u ON q.userid = u.userid
+      WHERE q.id = $1
+    `;
+
+    const result = await dbPool.query(query, [questionId]);
+
+    if (result.rows.length === 0) {
       return res.status(StatusCodes.NOT_FOUND).json({
         error: "Not Found",
         msg: "The requested question could not be found",
       });
     }
 
-    // Return the fetched question
-    res.status(StatusCodes.OK).json({ question: results[0] });
+    res.status(StatusCodes.OK).json({ question: result.rows[0] });
   } catch (error) {
     console.error("Database query error:", error.stack);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       error: "Internal Server Error",
-      msg: "An unexpected error occurred",
+      msg: error.message,
     });
   }
 }
 
 async function editQuestion(req, res) {
-  const userId = req.user.userid; // Get the logged-in user's ID
-  const questionId = req.params.id; // Get the question ID from the route
-  const { title, description } = req.body; // Get the updated title from the request body
+  const userId = req.user.userid;
+  const questionId = req.params.id;
+  const { title, description, tag } = req.body;
 
   if (!title || !description) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       error: "Bad Request",
-      msg: "Title is required",
+      msg: "Title and description are required",
     });
   }
 
   try {
-    const [question] = await dbPool.query(
-      "SELECT userid FROM questions WHERE id = ?",
-      [questionId]
-    );
+    // Convert tag string to PostgreSQL array format
+    const tagsArray = tag ? tag.split(",").map((t) => t.trim()) : null;
 
-    if (question.length === 0) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        error: "Not Found",
-        msg: "Question not found",
-      });
-    }
+    const query = `
+      UPDATE questions 
+      SET title = $1, description = $2, tags = $3 
+      WHERE id = $4 AND userid = $5
+      RETURNING *
+    `;
 
-    if (question[0].userid !== userId) {
+    const result = await dbPool.query(query, [
+      title,
+      description,
+      tagsArray,
+      questionId,
+      userId,
+    ]);
+
+    if (result.rowCount === 0) {
       return res.status(StatusCodes.FORBIDDEN).json({
         error: "Forbidden",
-        msg: "You are not authorized to edit this question",
+        msg: "You are not authorized to edit this question or it doesn't exist",
       });
     }
 
-    await dbPool.query(
-      "UPDATE questions SET title = ?, description = ? WHERE id = ?",
-      [title, description, questionId]
-    );
-
-    res.status(StatusCodes.OK).json({ msg: "Question updated successfully" });
+    res.status(StatusCodes.OK).json({
+      msg: "Question updated successfully",
+      question: result.rows[0],
+    });
   } catch (error) {
     console.error(error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       error: "Internal Server Error",
-      msg: "An unexpected error occurred",
+      msg: error.message,
     });
   }
 }
 
 async function deleteQuestion(req, res) {
-  const userId = req.user.userid; // Get the logged-in user's ID
-  const questionId = req.params.id; // Get the question ID from the route
+  const userId = req.user.userid;
+  const questionId = req.params.id;
 
   try {
-    const [question] = await dbPool.query(
-      "SELECT userid FROM questions WHERE id = ?",
-      [questionId]
+    const result = await dbPool.query(
+      `DELETE FROM questions 
+       WHERE id = $1 AND userid = $2 
+       RETURNING questionid`,
+      [questionId, userId]
     );
 
-    if (question.length === 0) {
+    if (result.rowCount === 0) {
       return res.status(StatusCodes.NOT_FOUND).json({
         error: "Not Found",
-        msg: "Question not found",
+        msg: "Question not found or you don't have permission",
       });
     }
 
-    if (question[0].userid !== userId) {
-      return res.status(StatusCodes.FORBIDDEN).json({
-        error: "Forbidden",
-        msg: "You are not authorized to delete this question",
-      });
-    }
-
-    await dbPool.query("DELETE FROM questions WHERE id = ?", [
-      questionId,
-    ]);
-    await dbPool.query("DELETE FROM questions WHERE id = ?", [
-      questionId,
-    ]);
-    res.status(StatusCodes.OK).json({ msg: "Question deleted successfully" });
+    res.status(StatusCodes.OK).json({
+      msg: "Question deleted successfully",
+      deletedId: result.rows[0].questionid,
+    });
   } catch (error) {
     console.error(error.message);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       error: "Internal Server Error",
-      msg: "An unexpected error occurred",
+      msg: error.message,
     });
   }
 }
