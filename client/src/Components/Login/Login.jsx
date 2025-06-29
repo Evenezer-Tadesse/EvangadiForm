@@ -150,7 +150,7 @@ function Login({
           className={`${styles.email_input} ${styles.email_input_login} ${
             emptyFields.email ? styles.error_bg : ""
           }`}
-          onChange={() => setEmptyFields({ ...emptyFields, email: false })}
+          onChange={() => setEmptyFields((prev) => ({ ...prev, email: false }))}
           placeholder="Email Address"
         />
 
@@ -160,7 +160,9 @@ function Login({
           className={`${styles.password__input} ${
             emptyFields.password ? styles.error_bg : ""
           }`}
-          onChange={() => setEmptyFields({ ...emptyFields, password: false })}
+          onChange={() =>
+            setEmptyFields((prev) => ({ ...prev, password: false }))
+          }
           placeholder="Password"
         />
 
