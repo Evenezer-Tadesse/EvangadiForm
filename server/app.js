@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require("path");
 // db connection
 const dbPool = require('./db/dbConfig');
 
@@ -9,12 +10,21 @@ const authMiddleware = require('./middleware/authMiddleware');
 
 // Initialize Express
 const app = express();
-const port = process.env.PORT || 5432; // Fallback for local dev
+const port = process.env.PORT || 3000; // Fallback for local dev
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  })
+);
 //json middleware to extract json data
 app.use(express.json());
+// Serve static frontend if needed
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
+}
 
 // Test the backend listening
 app.get('/', (req, res) => {
@@ -36,6 +46,8 @@ app.use('/api/questions', authMiddleware, questionRoutes);
 // Answer routes middleware
 const answerRoutes = require('./routes/answerRoute');
 app.use('/api/answers', authMiddleware, answerRoutes);
+// SPA fallback
+
 
 
 async function start() {
