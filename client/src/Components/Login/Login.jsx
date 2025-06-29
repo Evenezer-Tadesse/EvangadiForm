@@ -8,6 +8,9 @@ import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";
 
+import{safeSet} from "../../Utility/storage"
+
+
 function Login({
   setErrors,
   setEmptyFields,
@@ -80,24 +83,30 @@ function Login({
         password,
       });
 
-      localStorage.setItem("token", res.data.token); // Store token in localStorage
+      if (res.data.token && res.data.user) {
+        safeSet("token", res.data.token);
 
-      localStorage.setItem("user", JSON.stringify(res.data.user)); // Store user info in localStorage
+        // Ensure we don't store invalid data
+        safeSet("user", JSON.stringify(res.data.user));
 
-      dispatch({
-        type: Type.ADD_USER,
-        payload: {
-          token: res.data.token,
-          user: res.data.user,
-        },
-      });
+        dispatch({
+          type: Type.ADD_USER,
+          payload: {
+            token: res.data.token,
+            user: res.data.user,
+          },
+        });
 
-      setIsLoading(false);
-      navigate("/", { replace: true }); // Redirect to home page after successful login
+        navigate("/", { replace: true });
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error) {
-      console.error("Error during Login:", error);
-      toast.error(error?.response?.data?.msg);
-      setErrors(error?.response?.data?.msg);
+      console.error("Login error:", error);
+      const errorMsg = error?.response?.data?.msg || "Login failed";
+      toast.error(errorMsg);
+      setErrors(errorMsg);
+    } finally {
       setIsLoading(false);
     }
   }
