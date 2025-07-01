@@ -1,7 +1,7 @@
-import React from 'react';
-import styles from './Four04.module.css';
-import { Link } from 'react-router-dom';
-import Shared from '../../Components/Shared/Shared';
+import React from "react";
+import styles from "./Four04.module.css";
+import { Link } from "react-router-dom";
+import Shared from "../../Components/Shared/Shared";
 
 export default function Four04() {
   return (

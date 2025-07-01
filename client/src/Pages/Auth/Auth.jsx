@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import styles from './Auth.module.css';
-import About from '../../Components/About/About';
-import Login from '../../Components/Login/Login';
-import Signup from '../../Components/Signup/Signup';
-import Reset from '../../Components/Reset/Reset';
-import Shared from '../../Components/Shared/Shared';
+import React, { useState } from "react";
+import styles from "./Auth.module.css";
+import About from "../../Components/About/About";
+import Login from "../../Components/Login/Login";
+import Signup from "../../Components/Signup/Signup";
+import Reset from "../../Components/Reset/Reset";
+import Shared from "../../Components/Shared/Shared";
 
 function Auth() {
   // State to manage the display of login form
-  const [logInDisplay, setLogInDisplay] = useState('');
+  const [logInDisplay, setLogInDisplay] = useState("");
 
   // State to manage the display of registration form
   const [regInDisplay, setRegInDisplay] = useState(styles.display);
@@ -17,7 +17,7 @@ function Auth() {
   const [resetPage, setResetPage] = useState(styles.display);
 
   // State to manage errors
-  const [errors, setErrors] = useState('');
+  const [errors, setErrors] = useState("");
 
   // Empty fields for error display
   const [emptyFields, setEmptyFields] = useState({
@@ -30,7 +30,7 @@ function Auth() {
 
   // page changing functions start here***
   function registerPage() {
-    setErrors(''); // Reset errors
+    setErrors(""); // Reset errors
     setEmptyFields({
       email: false,
       password: false,
@@ -38,12 +38,12 @@ function Auth() {
       firstname: false,
       lastname: false,
     }); // Reset empty fields
-    setRegInDisplay('');
+    setRegInDisplay("");
     setLogInDisplay(styles.display);
     setResetPage(styles.display);
   }
   function loginPage() {
-    setErrors(''); // Reset errors
+    setErrors(""); // Reset errors
     setEmptyFields({
       email: false,
       password: false,
@@ -51,10 +51,10 @@ function Auth() {
       firstname: false,
       lastname: false,
     }); // Reset empty fields
-    setLogInDisplay('');
+    setLogInDisplay("");
     setRegInDisplay(styles.display);
     setResetPage(styles.display);
-  }  
+  }
 
   return (
     <Shared>

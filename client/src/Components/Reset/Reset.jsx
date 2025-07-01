@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import styles from "../../Pages/Auth/Auth.module.css";
-import axiosInstance from "../../api/axiosConfig";
+import styles from "../../pages/Auth/Auth.module.css";
+import axiosInstance from "../../Api/axiosConfig";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";

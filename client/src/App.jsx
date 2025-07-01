@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import Loader from './Components/Loader/Loader';
-import Router from './Router';
-import { ToastContainer } from 'react-toastify';
+import { useEffect, useState } from "react";
+import Loader from "./Components/Loader/Loader";
+import Router from "./Router";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);

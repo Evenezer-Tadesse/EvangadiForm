@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import styles from "./Home.module.css";
 import { AuthContext } from "../../Context/Context";
-import axiosInstance from "../../api/axiosConfig";
+import axiosInstance from "../../Api/axiosConfig";
 import { format, formatDistanceToNow } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuestions } from "../../Context/QuestionContext";

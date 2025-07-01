@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import styles from "./AnswerPage.module.css";
-import axiosBase from "../../api/axiosConfig";
+import axiosBase from "../../Api/axiosConfig";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Context/Context";
 import { format, formatDistanceToNow } from "date-fns";
@@ -168,50 +168,35 @@ const AnswerPage = () => {
     try {
       const res = await axiosBase.post(
         `/answers/vote/${answerId}`,
-        { voteType }, // must be "upvote" or "downvote"
+        { voteType },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      const message = res.data.msg;
-
-      setAnswers((prev) =>
-        prev.map((answer) => {
-          if (answer.answerid !== answerId) return answer;
-
-          // Adjust vote counts based on backend message
-          if (message.includes("removed")) {
-            if (voteType === "upvote") {
-              return { ...answer, likes: answer.likes - 1 };
-            } else {
-              return { ...answer, dislikes: answer.dislikes - 1 };
-            }
-          } else if (message.includes("changed")) {
-            if (voteType === "upvote") {
-              return {
-                ...answer,
-                likes: answer.likes + 1,
-                dislikes: answer.dislikes - 1,
-              };
-            } else {
-              return {
-                ...answer,
-                likes: answer.likes - 1,
-                dislikes: answer.dislikes + 1,
-              };
-            }
-          } else if (message.includes("added")) {
-            if (voteType === "upvote") {
-              return { ...answer, likes: answer.likes + 1 };
-            } else {
-              return { ...answer, dislikes: answer.dislikes + 1 };
-            }
-          }
-
-          return answer;
-        })
-      );
+      if (res.data.msg === "Vote removed successfully") {
+        // If the vote was removed, decrease the count
+        setAnswers((prev) =>
+          prev.map((answer) =>
+            answer.answerid === answerId
+              ? voteType === "like"
+                ? { ...answer, likes: answer.likes - 1 }
+                : { ...answer, dislikes: answer.dislikes - 1 }
+              : answer
+          )
+        );
+      } else {
+        // If the vote was added, increase the count
+        setAnswers((prev) =>
+          prev.map((answer) =>
+            answer.answerid === answerId
+              ? voteType === "like"
+                ? { ...answer, likes: answer.likes + 1 }
+                : { ...answer, dislikes: answer.dislikes + 1 }
+              : answer
+          )
+        );
+      }
     } catch (error) {
       console.error(
         "Error voting on answer:",
@@ -464,7 +449,7 @@ const AnswerPage = () => {
                         <div className={styles.answerActions}>
                           <button
                             onClick={() =>
-                              handleVoteAnswer(answer.answerid, "upvote")
+                              handleVoteAnswer(answer.answerid, "like")
                             }
                             className={`${styles.likeButton} ${
                               answer.likes === 1 ? styles.active : ""
@@ -474,7 +459,7 @@ const AnswerPage = () => {
                           </button>
                           <button
                             onClick={() =>
-                              handleVoteAnswer(answer.answerid, "downvote")
+                              handleVoteAnswer(answer.answerid, "dislike")
                             }
                             className={`${styles.dislikeButton} ${
                               answer.dislikes === 1 ? styles.active : ""

@@ -1,15 +1,12 @@
-import styles from "../../Pages/Auth/Auth.module.css";
+import styles from "../../pages/Auth/Auth.module.css";
 import { useContext, useRef, useState } from "react";
 import { AuthContext } from "../../Context/Context";
 import { Type } from "../../Utility/actionType";
-import axiosInstance from "../../api/axiosConfig";
+import axiosInstance from "../../Api/axiosConfig";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";
-
-import{safeSet} from "../../Utility/storage"
-
 
 function Login({
   setErrors,
@@ -83,30 +80,24 @@ function Login({
         password,
       });
 
-      if (res.data.token && res.data.user) {
-        safeSet("token", res.data.token);
+      localStorage.setItem("token", res.data.token); // Store token in localStorage
 
-        // Ensure we don't store invalid data
-        safeSet("user", JSON.stringify(res.data.user));
+      localStorage.setItem("user", JSON.stringify(res.data.user)); // Store user info in localStorage
 
-        dispatch({
-          type: Type.ADD_USER,
-          payload: {
-            token: res.data.token,
-            user: res.data.user,
-          },
-        });
+      dispatch({
+        type: Type.ADD_USER,
+        payload: {
+          token: res.data.token,
+          user: res.data.user,
+        },
+      });
 
-        navigate("/", { replace: true });
-      } else {
-        throw new Error("Invalid response from server");
-      }
+      setIsLoading(false);
+      navigate("/", { replace: true }); // Redirect to home page after successful login
     } catch (error) {
-      console.error("Login error:", error);
-      const errorMsg = error?.response?.data?.msg || "Login failed";
-      toast.error(errorMsg);
-      setErrors(errorMsg);
-    } finally {
+      console.error("Error during Login:", error);
+      toast.error(error?.response?.data?.msg);
+      setErrors(error?.response?.data?.msg);
       setIsLoading(false);
     }
   }
@@ -150,7 +141,7 @@ function Login({
           className={`${styles.email_input} ${styles.email_input_login} ${
             emptyFields.email ? styles.error_bg : ""
           }`}
-          onChange={() => setEmptyFields((prev) => ({ ...prev, email: false }))}
+          onChange={() => setEmptyFields({ ...emptyFields, email: false })}
           placeholder="Email Address"
         />
 
@@ -160,9 +151,7 @@ function Login({
           className={`${styles.password__input} ${
             emptyFields.password ? styles.error_bg : ""
           }`}
-          onChange={() =>
-            setEmptyFields((prev) => ({ ...prev, password: false }))
-          }
+          onChange={() => setEmptyFields({ ...emptyFields, password: false })}
           placeholder="Password"
         />
 

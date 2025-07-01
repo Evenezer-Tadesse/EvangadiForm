@@ -1,19 +1,7 @@
 import { Type } from "./actionType";
 
-// Safely parse localStorage data
-const safeParse = (key) => {
-  try {
-    const item = localStorage.getItem(key);
-    return item && item !== "undefined" ? JSON.parse(item) : null;
-  } catch (error) {
-    console.error(`Error parsing ${key}:`, error);
-    localStorage.removeItem(key);
-    return null;
-  }
-};
-
 const initial = {
-  user: safeParse("user"),
+  user: JSON.parse(localStorage.getItem("user")) || null,
   token: localStorage.getItem("token") || null,
 };
 

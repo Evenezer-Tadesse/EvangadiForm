@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo } from "react";
 
 const QuestionContext = createContext();
 
 function QuestionProvider({ children }) {
   const [questions, setQuestions] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Filter questions based on title search for suggestions
   const searchedSuggestions = useMemo(() => {
@@ -47,7 +47,7 @@ function QuestionProvider({ children }) {
 function useQuestions() {
   const context = useContext(QuestionContext);
   if (context === undefined)
-    throw new Error('QuestionContext was used outside of QuestionProvider');
+    throw new Error("QuestionContext was used outside of QuestionProvider");
   return context;
 }
 

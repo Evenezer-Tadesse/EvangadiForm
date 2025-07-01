@@ -1,5 +1,5 @@
-import styles from "../../Pages/Auth/Auth.module.css";
-import axiosInstance from "../../api/axiosConfig";
+import styles from "../../pages/Auth/Auth.module.css";
+import axiosInstance from "../../Api/axiosConfig";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
