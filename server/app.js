@@ -10,12 +10,25 @@ const authMiddleware = require("./middleware/authMiddleware");
 
 // Initialize Express
 const app = express();
-const port = process.env.PORT || 3000; // Fallback for local dev
+const port = process.env.PORT || 10000; // Fallback for local dev
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://evangadi-fe.netlify.app",
+];
+
 app.use(
   cors({
-    origin: (process.env.FRONTEND_URL || "http://localhost:5173").trim(),
+    origin: function (origin, callback) {
+      // Allow no-origin requests (like mobile apps, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
